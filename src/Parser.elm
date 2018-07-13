@@ -9,6 +9,11 @@ type Term =
   | Abs Ident Term
   | Bind Ident Term Term
   | App Term Term
+  | IfZero Term Term Term
+  | Zero
+  | Succ Term
+  | Pred Term
+  | Fix Term
 
 parsePCF : String -> Result String Term
 parsePCF input =
@@ -24,6 +29,11 @@ atom =
       symbol "(" *> lazy (\_->term) <* symbol ")"
   <|> lazy (\_->abstraction)
   <|> lazy (\_->binding)
+  <|> lazy (\_->ifZero)
+  <|> symbol "succ" *> map Succ (lazy (\_->atom))
+  <|> symbol "pred" *> map Pred (lazy (\_->atom))
+  <|> symbol "fix" *> map Fix (lazy (\_->atom))
+  <|> symbol "0" $> Zero
   <|> (Var <$> identifier)
 
 abstraction : Parser () Term
@@ -39,6 +49,13 @@ binding =
       symbol "in" *> lazy (\_->term) >>= \body->
         succeed (Bind ident value body)
 
+ifZero : Parser () Term
+ifZero =
+  symbol "if0" *> whitespace *> lazy (\_->atom) >>= \condition->
+    whitespace *> lazy (\_->atom) >>= \consequent->
+      whitespace *> lazy (\_->atom) >>= \alternate->
+        succeed (IfZero condition consequent alternate)
+
 symbol : String -> Parser () String
 symbol str = whitespace *> string str
 
@@ -47,4 +64,14 @@ identifier = (whitespace *> regex "[a-zA-Z0-9]+") >>= \word->
   then fail "Reserved word cannot be an identifier"
   else succeed word
 
-reservedWords = ["lambda", "let", "=", "in", "end"]
+reservedWords = [
+  "lambda",
+  "let",
+  "=",
+  "in",
+  "end",
+  "if0",
+  "0",
+  "succ",
+  "pred",
+  "fix"]
