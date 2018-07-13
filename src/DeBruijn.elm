@@ -15,7 +15,7 @@ type BTerm =
   | BPred BTerm
   | BFix BTerm
 
-deBruijnEncode : List Ident -> Term -> Result String BTerm
+deBruijnEncode : List Identifier -> Term -> Result String BTerm
 deBruijnEncode idStack term = case term of
   Var ident ->
     case elemIndex ident idStack of

@@ -4,8 +4,11 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
 import String
-import Parser exposing (parsePCF)
-import Compiler exposing (pcfToClass)
+import Parser exposing (..)
+import Compiler exposing (..)
+import DeBruijn exposing (..)
+import Eval exposing (..)
+import Dict exposing (Dict)
 
 main = Html.program {
   init = (initModel, Cmd.none),
@@ -25,6 +28,14 @@ initModel = {
   pcf = ""
   }
 
+run : Term -> Result String Int
+run term =
+   eval Dict.empty term
+   |> Result.andThen (\value->
+        case value of
+          Nat n -> Ok n
+          _ -> Err "Result not a number.")
+    
 view : Model -> Html Msg
 view model =
   div [] [
@@ -36,8 +47,10 @@ view model =
         div [] [
           div [] [ text "PCF Abstract syntax tree" ],
           div [] [ text (toString ast) ],
+          div [] [ text "Result" ],
+          div [] [ text (toString (run ast)) ],
           div [] [ text "Compiled to class result" ],
-          div [] [ text (pcfToClass ast) ]
+          div [] [ text (toString (Result.map compileToClass (deBruijnEncode [] ast))) ]
           ]
       Err errorMessage ->
         div [] [

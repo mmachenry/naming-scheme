@@ -17,3 +17,8 @@ compileToClass term = case term of
     "Global" ++ compileToClass val ++
     "Decorator" ++ compileToClass body ++ "Service"
   BApp term1 term2 -> compileToClass term1 ++ compileToClass term2
+  BIfZero term1 term2 term3 -> "undefined"
+  BZero -> "undefined"
+  BSucc term -> "undefined"
+  BPred term -> "undefined"
+  BFix term -> "undefind"

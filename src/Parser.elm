@@ -1,13 +1,13 @@
-module Parser exposing (parsePCF, Term(..), Ident)
+module Parser exposing (parsePCF, Term(..), Identifier)
 
 import Combine exposing (..)
 
-type alias Ident = String
+type alias Identifier = String
 
 type Term =
-    Var Ident
-  | Abs Ident Term
-  | Bind Ident Term Term
+    Var Identifier
+  | Abs Identifier Term
+  | Bind Identifier Term Term
   | App Term Term
   | IfZero Term Term Term
   | Zero
