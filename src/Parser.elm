@@ -1,4 +1,4 @@
-module Parser exposing (parsePCF, Term(..), Identifier)
+module Parser exposing (..)
 
 import Combine exposing (..)
 
@@ -10,7 +10,7 @@ type Term =
   | Bind Identifier Term Term
   | App Term Term
   | IfZero Term Term Term
-  | Zero
+  | Num Int
   | Succ Term
   | Pred Term
   | Fix Term
@@ -33,7 +33,7 @@ atom =
   <|> symbol "succ" *> map Succ (lazy (\_->atom))
   <|> symbol "pred" *> map Pred (lazy (\_->atom))
   <|> symbol "fix" *> map Fix (lazy (\_->atom))
-  <|> symbol "0" $> Zero
+  <|> symbol "0" $> Num 0
   <|> (Var <$> identifier)
 
 abstraction : Parser () Term
@@ -65,13 +65,47 @@ identifier = (whitespace *> regex "[a-zA-Z0-9]+") >>= \word->
   else succeed word
 
 reservedWords = [
-  "lambda",
-  "let",
-  "=",
-  "in",
-  "end",
-  "if0",
-  "0",
-  "succ",
-  "pred",
-  "fix"]
+  "lambda", "let", "=", "in", "end",
+  "if0", "0", "succ", "pred", "fix"]
+
+-----------
+-- Print --
+-----------
+
+lambdaStr = "λ"
+
+pprTerm : Term -> String
+pprTerm term = case term of
+  Var ident -> ident
+  Abs ident body ->
+    lambdaStr ++ ident ++ "." ++ pprTerm body
+  Bind ident value body ->
+    "let " ++ ident ++ " = " ++ pprTerm value ++
+    " in " ++ pprTerm body ++ " end"
+  App term1 term2 ->
+    pprLeftApp term1 ++ " " ++ pprAtom term2
+  IfZero cond conseq alt ->
+       "if0 " ++ pprAtom cond
+    ++ " " ++ pprAtom conseq
+    ++ " " ++ pprAtom alt
+  Num n -> toString n
+  Succ term1 -> "succ " ++ pprAtom term1
+  Pred term1 -> "pred " ++ pprAtom term1
+  Fix term1 -> "fix " ++ pprAtom term1
+
+pprLeftApp : Term -> String
+pprLeftApp term = case term of
+  Abs _ _ -> parens (pprTerm term)
+  _ -> pprTerm term
+
+pprAtom : Term -> String
+pprAtom term = case term of
+  Abs _ _ -> parens (pprTerm term)
+  App _ _ -> parens (pprTerm term)
+  Succ _ -> parens (pprTerm term)
+  Pred _ -> parens (pprTerm term)
+  Fix _ -> parens (pprTerm term)
+  _ -> pprTerm term
+
+parens str = "(" ++ str ++ ")"
+

@@ -18,47 +18,36 @@ main = Html.program {
   }
 
 type alias Model = {
-  pcf : String
+  pcf : String,
+  term : Result String Term
   }
 
 type Msg =
-  UpdatePCF String
+    EditProgram String
+  | RunProgram
 
 initModel = {
-  pcf = ""
+  pcf = "",
+  term = Err "No code"
   }
 
-run : Term -> Result String Int
-run term =
-   eval Dict.empty term
-   |> Result.andThen (\value->
-        case value of
-          Nat n -> Ok n
-          _ -> Err "Result not a number.")
-    
 view : Model -> Html Msg
 view model =
   div [] [
-    div [] [
       div [] [ text "Input PCF program" ],
-      div [] [ textarea [onInput UpdatePCF] [ text model.pcf ] ] ],
-    case parsePCF model.pcf of
-      Ok ast ->
-        div [] [
-          div [] [ text "PCF Abstract syntax tree" ],
-          div [] [ text (toString ast) ],
-          div [] [ text "Result" ],
-          div [] [ text (toString (run ast)) ],
-          div [] [ text "Compiled to class result" ],
-          div [] [ text (toString (Result.map compileToClass (deBruijnEncode [] ast))) ]
-          ]
-      Err errorMessage ->
-        div [] [
-          div [] [ text "PCF Abstract syntax tree" ],
-          div [] [ text errorMessage ],
-          div [] [ text "Compiled to class result" ],
-          div [] [ text "unavailable" ]
-          ]
+      div [] [
+        textarea [onInput EditProgram] [ text model.pcf ],
+        button [onClick RunProgram] [ text "Run" ] ],
+      case model.term of
+        Ok t -> div [] [
+                  div [] [ text "Program" ],
+                  div [] [ text (pprTerm t) ],
+                  div [] [ text "AST" ],
+                  div [] [ text (toString model.term) ],
+                  div [] [ text "Output" ],
+                  div [] [ text (toString (eval t)) ]
+                  ]
+        Err m -> div [] [ text m ]
     ]
 
 update : Msg -> Model -> (Model, Cmd msg)
@@ -66,7 +55,8 @@ update msg model = (updateModel msg model, Cmd.none)
 
 updateModel : Msg -> Model -> Model
 updateModel msg model = case msg of
-  UpdatePCF str -> { model | pcf = str }
+  EditProgram str -> { model | pcf = str }
+  RunProgram -> { model | term = parsePCF model.pcf }
 
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.none
