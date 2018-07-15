@@ -39,7 +39,7 @@ atom =
 abstraction : Parser () Term
 abstraction =
   Abs <$>
-    (symbol "lambda" *> identifier)
+    ((symbol "λ" <|> symbol "lambda") *> identifier)
     <*> (symbol "." *> lazy (\_->term))
 
 binding : Parser () Term
