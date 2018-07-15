@@ -1,3 +1,7 @@
+Eval
+---
+Tail call optimize step function
+
 UI updates
 ---
 Fix the width of the text area or something reasonable
