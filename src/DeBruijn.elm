@@ -1,9 +1,12 @@
 module DeBruijn exposing (..)
 
 import Parser exposing (..)
+import Combine exposing (..)
+import Combine.Num
 import Result exposing (Result)
 import List.Extra exposing (elemIndex)
 import List exposing (concat, concatMap)
+import Dict exposing (Dict)
 
 type BTerm =
     BVar Int
@@ -15,6 +18,10 @@ type BTerm =
   | BSucc BTerm
   | BPred BTerm
   | BFix BTerm
+
+type ReservedWord =
+  RLambda | RLet | RIn | REnd | RIf | RZero |
+  RSucc | RPred | RFix | ROpen | RClose
 
 deBruijnEncode : List Identifier -> Term -> Result String BTerm
 deBruijnEncode idStack term = case term of
@@ -38,6 +45,97 @@ deBruijnEncode idStack term = case term of
   Succ term -> Result.map BSucc (deBruijnEncode idStack term)
   Pred term -> Result.map BPred (deBruijnEncode idStack term)
   Fix term -> Result.map BFix (deBruijnEncode idStack term)
+
+-- Parse
+
+parseDeBruijn = buildParser lambdaCalcWords lambdaCalcVarRef
+
+parseClass = buildParser classWords classVarRef
+
+buildParser :
+     (ReservedWord -> String)
+  -> (Parser () BTerm)
+  -> (String -> Result String BTerm)
+buildParser rword parseVarRef =
+  let parseString : String -> Result String BTerm
+      parseString input =
+        case parse bTerm input of
+          Ok (_, stream, result) -> Ok result
+          Err (_, stream, errors) -> Err (String.join " or " errors)
+
+      bTerm : Parser () BTerm
+      bTerm = chainl (whitespace $> BApp) (lazy (\_->bAtom))
+
+      bAtom : Parser () BTerm
+      bAtom =
+            symbol ROpen *> lazy (\_->bTerm) <* symbol RClose
+        <|> lazy (\_->bAbstraction)
+        <|> lazy (\_->bBinding)
+        <|> lazy (\_->bIfZero)
+        <|> symbol RSucc *> map BSucc (lazy (\_->bAtom))
+        <|> symbol RPred *> map BPred (lazy (\_->bAtom))
+        <|> symbol RFix *> map BFix (lazy (\_->bAtom))
+        <|> symbol RZero $> BNum 0
+        <|> parseVarRef 
+
+      bAbstraction : Parser () BTerm
+      bAbstraction =
+        BAbs <$> (symbol RLambda *> lazy (\_->bTerm))
+
+      bBinding : Parser () BTerm
+      bBinding =
+        symbol RLet *> lazy (\_->bTerm) >>= \value->
+          symbol RIn *> lazy (\_->bTerm) >>= \body->
+            succeed (BBind value body)
+
+      bIfZero : Parser () BTerm
+      bIfZero =
+        symbol RIf *> whitespace *> lazy (\_->bAtom) >>= \condition->
+          whitespace *> lazy (\_->bAtom) >>= \consequent->
+            whitespace *> lazy (\_->bAtom) >>= \alternate->
+              succeed (BIfZero condition consequent alternate)
+
+      symbol : ReservedWord -> Parser () String
+      symbol r = whitespace *> string (rword r)
+
+  in parseString
+
+lambdaCalcWords : ReservedWord -> String
+lambdaCalcWords r = case r of
+  RLambda -> "λ"
+  RLet -> "let"
+  RIn -> "in"
+  REnd -> "end"
+  RIf -> "if"
+  RZero -> "zero"
+  RSucc -> "succ"
+  RPred -> "pred"
+  RFix -> "fix"
+  ROpen -> "("
+  RClose -> ")"
+
+lambdaCalcVarRef = BVar <$> (whitespace *> Combine.Num.int <* whitespace)
+
+classWords : ReservedWord -> String
+classWords r = case r of
+  RLambda -> "Proxy"
+  RLet -> "Global"
+  RIn -> "Decorator"
+  REnd -> "Service"
+  RIf -> "Initializer"
+  RZero -> "Observer"
+  RSucc -> "Session"
+  RPred -> "Prototype"
+  RFix -> "Helper"
+  ROpen -> "Parser"
+  RClose -> "Adapter"
+
+classVarRef =
+  many (string "Meta") >>= \metaStr->
+    string "Object" >>= \_->
+      succeed (BVar (List.length metaStr))
+
+-- Print
 
 pprBTerm : BTerm -> List String
 pprBTerm term = case term of
