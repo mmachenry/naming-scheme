@@ -11372,169 +11372,9 @@ var _user$project$Parser$parsePCF = function (input) {
 			A2(_elm_lang$core$String$join, ' or ', _p14._0._2));
 	}
 };
-var _user$project$DeBruijn$parens = function (l) {
-	return _elm_lang$core$List$concat(
-		{
-			ctor: '::',
-			_0: {
-				ctor: '::',
-				_0: '(',
-				_1: {ctor: '[]'}
-			},
-			_1: {
-				ctor: '::',
-				_0: l,
-				_1: {
-					ctor: '::',
-					_0: {
-						ctor: '::',
-						_0: ')',
-						_1: {ctor: '[]'}
-					},
-					_1: {ctor: '[]'}
-				}
-			}
-		});
-};
-var _user$project$DeBruijn$pprBTerm = function (term) {
-	var _p0 = term;
-	switch (_p0.ctor) {
-		case 'BVar':
-			return {
-				ctor: '::',
-				_0: _elm_lang$core$Basics$toString(_p0._0),
-				_1: {ctor: '[]'}
-			};
-		case 'BAbs':
-			return {
-				ctor: '::',
-				_0: 'λ',
-				_1: _user$project$DeBruijn$pprBTerm(_p0._0)
-			};
-		case 'BBind':
-			return _elm_lang$core$List$concat(
-				{
-					ctor: '::',
-					_0: {
-						ctor: '::',
-						_0: 'let',
-						_1: {ctor: '[]'}
-					},
-					_1: {
-						ctor: '::',
-						_0: _user$project$DeBruijn$pprBTerm(_p0._0),
-						_1: {
-							ctor: '::',
-							_0: {
-								ctor: '::',
-								_0: 'in',
-								_1: {ctor: '[]'}
-							},
-							_1: {
-								ctor: '::',
-								_0: _user$project$DeBruijn$pprBTerm(_p0._1),
-								_1: {
-									ctor: '::',
-									_0: {
-										ctor: '::',
-										_0: 'end',
-										_1: {ctor: '[]'}
-									},
-									_1: {ctor: '[]'}
-								}
-							}
-						}
-					}
-				});
-		case 'BApp':
-			return _elm_lang$core$List$concat(
-				{
-					ctor: '::',
-					_0: _user$project$DeBruijn$pprBAppLeft(_p0._0),
-					_1: {
-						ctor: '::',
-						_0: _user$project$DeBruijn$pprBAtom(_p0._1),
-						_1: {ctor: '[]'}
-					}
-				});
-		case 'BIfZero':
-			return {
-				ctor: '::',
-				_0: 'if',
-				_1: A2(
-					_elm_lang$core$List$concatMap,
-					_user$project$DeBruijn$pprBAtom,
-					{
-						ctor: '::',
-						_0: _p0._0,
-						_1: {
-							ctor: '::',
-							_0: _p0._1,
-							_1: {
-								ctor: '::',
-								_0: _p0._2,
-								_1: {ctor: '[]'}
-							}
-						}
-					})
-			};
-		case 'BZero':
-			return {
-				ctor: '::',
-				_0: 'zero',
-				_1: {ctor: '[]'}
-			};
-		case 'BSucc':
-			return {
-				ctor: '::',
-				_0: 'succ',
-				_1: _user$project$DeBruijn$pprBAtom(_p0._0)
-			};
-		case 'BPred':
-			return {
-				ctor: '::',
-				_0: 'pred',
-				_1: _user$project$DeBruijn$pprBAtom(_p0._0)
-			};
-		default:
-			return {
-				ctor: '::',
-				_0: 'fix',
-				_1: _user$project$DeBruijn$pprBAtom(_p0._0)
-			};
-	}
-};
-var _user$project$DeBruijn$pprBAppLeft = function (term) {
-	var _p1 = term;
-	if (_p1.ctor === 'BAbs') {
-		return _user$project$DeBruijn$parens(
-			_user$project$DeBruijn$pprBTerm(term));
-	} else {
-		return _user$project$DeBruijn$pprBTerm(term);
-	}
-};
-var _user$project$DeBruijn$pprBAtom = function (term) {
-	var _p2 = term;
-	switch (_p2.ctor) {
-		case 'BApp':
-			return _user$project$DeBruijn$parens(
-				_user$project$DeBruijn$pprBTerm(term));
-		case 'BSucc':
-			return _user$project$DeBruijn$parens(
-				_user$project$DeBruijn$pprBTerm(term));
-		case 'BPred':
-			return _user$project$DeBruijn$parens(
-				_user$project$DeBruijn$pprBTerm(term));
-		case 'BFix':
-			return _user$project$DeBruijn$parens(
-				_user$project$DeBruijn$pprBTerm(term));
-		default:
-			return _user$project$DeBruijn$pprBTerm(term);
-	}
-};
 var _user$project$DeBruijn$classWords = function (r) {
-	var _p3 = r;
-	switch (_p3.ctor) {
+	var _p0 = r;
+	switch (_p0.ctor) {
 		case 'RLambda':
 			return 'Proxy';
 		case 'RLet':
@@ -11560,8 +11400,8 @@ var _user$project$DeBruijn$classWords = function (r) {
 	}
 };
 var _user$project$DeBruijn$lambdaCalcWords = function (r) {
-	var _p4 = r;
-	switch (_p4.ctor) {
+	var _p1 = r;
+	switch (_p1.ctor) {
 		case 'RLambda':
 			return 'λ';
 		case 'RLet':
@@ -11616,17 +11456,17 @@ var _user$project$DeBruijn$BVar = function (a) {
 };
 var _user$project$DeBruijn$deBruijnEncode = F2(
 	function (idStack, term) {
-		var _p5 = term;
-		switch (_p5.ctor) {
+		var _p2 = term;
+		switch (_p2.ctor) {
 			case 'Var':
-				var _p7 = _p5._0;
-				var _p6 = A2(_elm_community$list_extra$List_Extra$elemIndex, _p7, idStack);
-				if (_p6.ctor === 'Just') {
+				var _p4 = _p2._0;
+				var _p3 = A2(_elm_community$list_extra$List_Extra$elemIndex, _p4, idStack);
+				if (_p3.ctor === 'Just') {
 					return _elm_lang$core$Result$Ok(
-						_user$project$DeBruijn$BVar(_p6._0));
+						_user$project$DeBruijn$BVar(_p3._0));
 				} else {
 					return _elm_lang$core$Result$Err(
-						A2(_elm_lang$core$Basics_ops['++'], 'Unbound identifier: ', _p7));
+						A2(_elm_lang$core$Basics_ops['++'], 'Unbound identifier: ', _p4));
 				}
 			case 'Abs':
 				return A2(
@@ -11634,47 +11474,47 @@ var _user$project$DeBruijn$deBruijnEncode = F2(
 					_user$project$DeBruijn$BAbs,
 					A2(
 						_user$project$DeBruijn$deBruijnEncode,
-						{ctor: '::', _0: _p5._0, _1: idStack},
-						_p5._1));
+						{ctor: '::', _0: _p2._0, _1: idStack},
+						_p2._1));
 			case 'Bind':
 				return A3(
 					_elm_lang$core$Result$map2,
 					_user$project$DeBruijn$BBind,
-					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._1),
+					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p2._1),
 					A2(
 						_user$project$DeBruijn$deBruijnEncode,
-						{ctor: '::', _0: _p5._0, _1: idStack},
-						_p5._2));
+						{ctor: '::', _0: _p2._0, _1: idStack},
+						_p2._2));
 			case 'App':
 				return A3(
 					_elm_lang$core$Result$map2,
 					_user$project$DeBruijn$BApp,
-					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._0),
-					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._1));
+					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p2._0),
+					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p2._1));
 			case 'IfZero':
 				return A4(
 					_elm_lang$core$Result$map3,
 					_user$project$DeBruijn$BIfZero,
-					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._0),
-					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._1),
-					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._2));
+					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p2._0),
+					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p2._1),
+					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p2._2));
 			case 'Num':
 				return _elm_lang$core$Result$Ok(_user$project$DeBruijn$BZero);
 			case 'Succ':
 				return A2(
 					_elm_lang$core$Result$map,
 					_user$project$DeBruijn$BSucc,
-					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._0));
+					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p2._0));
 			case 'Pred':
 				return A2(
 					_elm_lang$core$Result$map,
 					_user$project$DeBruijn$BPred,
-					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._0));
+					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p2._0));
 			default:
 				return A2(
 					_elm_lang$core$Result$map,
 					_user$project$DeBruijn$BFix,
-					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._0));
+					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p2._0));
 		}
 	});
 var _user$project$DeBruijn$lambdaCalcVarRef = A2(
@@ -11692,7 +11532,7 @@ var _user$project$DeBruijn$classVarRef = A2(
 		return A2(
 			_elm_community$parser_combinators$Combine_ops['>>='],
 			_elm_community$parser_combinators$Combine$string('Object'),
-			function (_p8) {
+			function (_p5) {
 				return _elm_community$parser_combinators$Combine$succeed(
 					_user$project$DeBruijn$BVar(
 						_elm_lang$core$List$length(metaStr)));
@@ -11722,7 +11562,7 @@ var _user$project$DeBruijn$buildParser = F2(
 			_elm_community$parser_combinators$Combine$chainl,
 			A2(_elm_community$parser_combinators$Combine_ops['$>'], _elm_community$parser_combinators$Combine$whitespace, _user$project$DeBruijn$BApp),
 			_elm_community$parser_combinators$Combine$lazy(
-				function (_p9) {
+				function (_p6) {
 					return bAtom;
 				}));
 		var bAtom = A2(
@@ -11733,26 +11573,26 @@ var _user$project$DeBruijn$buildParser = F2(
 					_elm_community$parser_combinators$Combine_ops['*>'],
 					symbol(_user$project$DeBruijn$ROpen),
 					_elm_community$parser_combinators$Combine$lazy(
-						function (_p10) {
+						function (_p7) {
 							return bTerm;
 						})),
 				symbol(_user$project$DeBruijn$RClose)),
 			A2(
 				_elm_community$parser_combinators$Combine_ops['<|>'],
 				_elm_community$parser_combinators$Combine$lazy(
-					function (_p11) {
+					function (_p8) {
 						return bAbstraction;
 					}),
 				A2(
 					_elm_community$parser_combinators$Combine_ops['<|>'],
 					_elm_community$parser_combinators$Combine$lazy(
-						function (_p12) {
+						function (_p9) {
 							return bBinding;
 						}),
 					A2(
 						_elm_community$parser_combinators$Combine_ops['<|>'],
 						_elm_community$parser_combinators$Combine$lazy(
-							function (_p13) {
+							function (_p10) {
 								return bIfZero;
 							}),
 						A2(
@@ -11764,7 +11604,7 @@ var _user$project$DeBruijn$buildParser = F2(
 									_elm_community$parser_combinators$Combine$map,
 									_user$project$DeBruijn$BSucc,
 									_elm_community$parser_combinators$Combine$lazy(
-										function (_p14) {
+										function (_p11) {
 											return bAtom;
 										}))),
 							A2(
@@ -11776,7 +11616,7 @@ var _user$project$DeBruijn$buildParser = F2(
 										_elm_community$parser_combinators$Combine$map,
 										_user$project$DeBruijn$BPred,
 										_elm_community$parser_combinators$Combine$lazy(
-											function (_p15) {
+											function (_p12) {
 												return bAtom;
 											}))),
 								A2(
@@ -11788,7 +11628,7 @@ var _user$project$DeBruijn$buildParser = F2(
 											_elm_community$parser_combinators$Combine$map,
 											_user$project$DeBruijn$BFix,
 											_elm_community$parser_combinators$Combine$lazy(
-												function (_p16) {
+												function (_p13) {
 													return bAtom;
 												}))),
 									A2(
@@ -11805,7 +11645,7 @@ var _user$project$DeBruijn$buildParser = F2(
 				_elm_community$parser_combinators$Combine_ops['*>'],
 				symbol(_user$project$DeBruijn$RLambda),
 				_elm_community$parser_combinators$Combine$lazy(
-					function (_p17) {
+					function (_p14) {
 						return bTerm;
 					})));
 		var bBinding = A2(
@@ -11814,7 +11654,7 @@ var _user$project$DeBruijn$buildParser = F2(
 				_elm_community$parser_combinators$Combine_ops['*>'],
 				symbol(_user$project$DeBruijn$RLet),
 				_elm_community$parser_combinators$Combine$lazy(
-					function (_p18) {
+					function (_p15) {
 						return bTerm;
 					})),
 			function (value) {
@@ -11824,7 +11664,7 @@ var _user$project$DeBruijn$buildParser = F2(
 						_elm_community$parser_combinators$Combine_ops['*>'],
 						symbol(_user$project$DeBruijn$RIn),
 						_elm_community$parser_combinators$Combine$lazy(
-							function (_p19) {
+							function (_p16) {
 								return bTerm;
 							})),
 					function (body) {
@@ -11841,7 +11681,7 @@ var _user$project$DeBruijn$buildParser = F2(
 					symbol(_user$project$DeBruijn$RIf),
 					_elm_community$parser_combinators$Combine$whitespace),
 				_elm_community$parser_combinators$Combine$lazy(
-					function (_p20) {
+					function (_p17) {
 						return bAtom;
 					})),
 			function (condition) {
@@ -11851,7 +11691,7 @@ var _user$project$DeBruijn$buildParser = F2(
 						_elm_community$parser_combinators$Combine_ops['*>'],
 						_elm_community$parser_combinators$Combine$whitespace,
 						_elm_community$parser_combinators$Combine$lazy(
-							function (_p21) {
+							function (_p18) {
 								return bAtom;
 							})),
 					function (consequent) {
@@ -11861,7 +11701,7 @@ var _user$project$DeBruijn$buildParser = F2(
 								_elm_community$parser_combinators$Combine_ops['*>'],
 								_elm_community$parser_combinators$Combine$whitespace,
 								_elm_community$parser_combinators$Combine$lazy(
-									function (_p22) {
+									function (_p19) {
 										return bAtom;
 									})),
 							function (alternate) {
@@ -11871,64 +11711,156 @@ var _user$project$DeBruijn$buildParser = F2(
 					});
 			});
 		var parseString = function (input) {
-			var _p23 = A2(_elm_community$parser_combinators$Combine$parse, bTerm, input);
-			if (_p23.ctor === 'Ok') {
-				return _elm_lang$core$Result$Ok(_p23._0._2);
+			var _p20 = A2(_elm_community$parser_combinators$Combine$parse, bTerm, input);
+			if (_p20.ctor === 'Ok') {
+				return _elm_lang$core$Result$Ok(_p20._0._2);
 			} else {
 				return _elm_lang$core$Result$Err(
-					A2(_elm_lang$core$String$join, ' or ', _p23._0._2));
+					A2(_elm_lang$core$String$join, ' or ', _p20._0._2));
 			}
 		};
 		return parseString;
 	});
 var _user$project$DeBruijn$parseDeBruijn = A2(_user$project$DeBruijn$buildParser, _user$project$DeBruijn$lambdaCalcWords, _user$project$DeBruijn$lambdaCalcVarRef);
 var _user$project$DeBruijn$parseClass = A2(_user$project$DeBruijn$buildParser, _user$project$DeBruijn$classWords, _user$project$DeBruijn$classVarRef);
-var _user$project$Compiler$alphaConvert = function (word) {
-	var _p0 = word;
-	switch (_p0) {
-		case 'λ':
-			return 'Proxy';
-		case 'fix':
-			return 'Helper';
-		case '(':
-			return 'Parser';
-		case ')':
-			return 'Adapter';
-		case 'succ':
-			return 'Session';
-		case 'pred':
-			return 'Prototype';
-		case 'if':
-			return 'Initializer';
-		case 'zero':
-			return 'Observer';
-		case 'let':
-			return 'Global';
-		case 'in':
-			return 'Decorator';
-		case 'end':
-			return 'Service';
-		default:
-			var _p1 = _elm_lang$core$String$toInt(_p0);
-			if (_p1.ctor === 'Ok') {
-				return A2(
+var _user$project$DeBruijn$buildPrinter = F3(
+	function (rword, printVarRef, seperator) {
+		var parens = function (l) {
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				rword(_user$project$DeBruijn$ROpen),
+				A2(
 					_elm_lang$core$Basics_ops['++'],
-					A2(_elm_lang$core$String$repeat, _p1._0, 'Meta'),
-					'Object');
-			} else {
-				return '!!!';
+					l,
+					rword(_user$project$DeBruijn$RClose)));
+		};
+		var pTerm = function (term) {
+			var _p21 = term;
+			switch (_p21.ctor) {
+				case 'BVar':
+					return printVarRef(_p21._0);
+				case 'BAbs':
+					return A2(
+						_elm_lang$core$Basics_ops['++'],
+						rword(_user$project$DeBruijn$RLambda),
+						pTerm(_p21._0));
+				case 'BBind':
+					return A2(
+						_elm_lang$core$String$join,
+						seperator,
+						{
+							ctor: '::',
+							_0: rword(_user$project$DeBruijn$RLet),
+							_1: {
+								ctor: '::',
+								_0: pTerm(_p21._0),
+								_1: {
+									ctor: '::',
+									_0: rword(_user$project$DeBruijn$RIn),
+									_1: {
+										ctor: '::',
+										_0: pTerm(_p21._1),
+										_1: {
+											ctor: '::',
+											_0: rword(_user$project$DeBruijn$REnd),
+											_1: {ctor: '[]'}
+										}
+									}
+								}
+							}
+						});
+				case 'BApp':
+					return A2(
+						_elm_lang$core$Basics_ops['++'],
+						pAppLeft(_p21._0),
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							seperator,
+							pAtom(_p21._1)));
+				case 'BIfZero':
+					return A2(
+						_elm_lang$core$String$join,
+						seperator,
+						{
+							ctor: '::',
+							_0: rword(_user$project$DeBruijn$RIf),
+							_1: A2(
+								_elm_lang$core$List$map,
+								pAtom,
+								{
+									ctor: '::',
+									_0: _p21._0,
+									_1: {
+										ctor: '::',
+										_0: _p21._1,
+										_1: {
+											ctor: '::',
+											_0: _p21._2,
+											_1: {ctor: '[]'}
+										}
+									}
+								})
+						});
+				case 'BZero':
+					return rword(_user$project$DeBruijn$RZero);
+				case 'BSucc':
+					return A2(
+						_elm_lang$core$Basics_ops['++'],
+						rword(_user$project$DeBruijn$RSucc),
+						pAtom(_p21._0));
+				case 'BPred':
+					return A2(
+						_elm_lang$core$Basics_ops['++'],
+						rword(_user$project$DeBruijn$RPred),
+						pAtom(_p21._0));
+				default:
+					return A2(
+						_elm_lang$core$Basics_ops['++'],
+						rword(_user$project$DeBruijn$RFix),
+						pAtom(_p21._0));
 			}
-	}
-};
-var _user$project$Compiler$compileToClass = function (term) {
-	return A2(
-		_elm_lang$core$String$join,
-		'',
-		A2(
-			_elm_lang$core$List$map,
-			_user$project$Compiler$alphaConvert,
-			_user$project$DeBruijn$pprBTerm(term)));
-};
+		};
+		var pAppLeft = function (term) {
+			var _p22 = term;
+			if (_p22.ctor === 'BAbs') {
+				return parens(
+					pTerm(term));
+			} else {
+				return pTerm(term);
+			}
+		};
+		var pAtom = function (term) {
+			var _p23 = term;
+			switch (_p23.ctor) {
+				case 'BApp':
+					return parens(
+						pTerm(term));
+				case 'BSucc':
+					return parens(
+						pTerm(term));
+				case 'BPred':
+					return parens(
+						pTerm(term));
+				case 'BFix':
+					return parens(
+						pTerm(term));
+				default:
+					return pTerm(term);
+			}
+		};
+		return pTerm;
+	});
+var _user$project$DeBruijn$toDeBruijnString = A3(_user$project$DeBruijn$buildPrinter, _user$project$DeBruijn$lambdaCalcWords, _elm_lang$core$Basics$toString, ' ');
+var _user$project$DeBruijn$toClassString = A3(
+	_user$project$DeBruijn$buildPrinter,
+	_user$project$DeBruijn$classWords,
+	function (n) {
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(_elm_lang$core$String$repeat, n, 'Meta'),
+			'Object');
+	},
+	'');
 var _user$project$Eval$subst = F3(
 	function (depth, replacement, term) {
 		var _p0 = term;
@@ -12215,7 +12147,7 @@ var _user$project$Main$view = function (model) {
 							ctor: '::',
 							_0: {
 								ctor: '_Tuple2',
-								_0: 'DeBruijn',
+								_0: 'De Bruijn',
 								_1: _user$project$Main$SwitchTo(_user$project$Main$DeBruijn)
 							},
 							_1: {
@@ -12288,7 +12220,7 @@ var _user$project$Main$view = function (model) {
 										{ctor: '[]'},
 										{
 											ctor: '::',
-											_0: _elm_lang$html$Html$text('DeBruijn Encoded Lambda Caculus.'),
+											_0: _elm_lang$html$Html$text('De Bruijn Encoded Lambda Caculus.'),
 											_1: {ctor: '[]'}
 										}),
 									_1: {
@@ -12299,10 +12231,7 @@ var _user$project$Main$view = function (model) {
 											{
 												ctor: '::',
 												_0: _elm_lang$html$Html$text(
-													A2(
-														_elm_lang$core$String$join,
-														' ',
-														_user$project$DeBruijn$pprBTerm(_p7))),
+													_user$project$DeBruijn$toDeBruijnString(_p7)),
 												_1: {ctor: '[]'}
 											}),
 										_1: {
@@ -12323,7 +12252,7 @@ var _user$project$Main$view = function (model) {
 													{
 														ctor: '::',
 														_0: _elm_lang$html$Html$text(
-															_user$project$Compiler$compileToClass(_p7)),
+															_user$project$DeBruijn$toClassString(_p7)),
 														_1: {ctor: '[]'}
 													}),
 												_1: {
@@ -12358,10 +12287,7 @@ var _user$project$Main$view = function (model) {
 																					{
 																						ctor: '::',
 																						_0: _elm_lang$html$Html$text(
-																							A2(
-																								_elm_lang$core$String$join,
-																								' ',
-																								_user$project$DeBruijn$pprBTerm(_p6))),
+																							_user$project$DeBruijn$toDeBruijnString(_p6)),
 																						_1: {ctor: '[]'}
 																					}),
 																				_1: {
@@ -12382,7 +12308,7 @@ var _user$project$Main$view = function (model) {
 																							{
 																								ctor: '::',
 																								_0: _elm_lang$html$Html$text(
-																									_user$project$Compiler$compileToClass(_p6)),
+																									_user$project$DeBruijn$toClassString(_p6)),
 																								_1: {ctor: '[]'}
 																							}),
 																						_1: {ctor: '[]'}

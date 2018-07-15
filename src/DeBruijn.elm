@@ -137,32 +137,53 @@ classVarRef =
 
 -- Print
 
-pprBTerm : BTerm -> List String
-pprBTerm term = case term of
-  BVar i -> [toString i]
-  BAbs body -> "λ" :: pprBTerm body
-  BBind value body ->
-    concat [["let"], pprBTerm value, ["in"], pprBTerm body, ["end"]]
-  BApp term1 term2 -> concat [pprBAppLeft term1, pprBAtom term2]
-  BIfZero term1 term2 term3 -> "if" :: concatMap pprBAtom [term1, term2, term3]
-  BZero -> ["zero"]
-  BSucc term1 -> "succ" :: pprBAtom term1
-  BPred term1 -> "pred" :: pprBAtom term1
-  BFix term1 -> "fix" :: pprBAtom term1
+toDeBruijnString : BTerm -> String
+toDeBruijnString = buildPrinter lambdaCalcWords toString " "
 
-pprBAtom : BTerm -> List String
-pprBAtom term = case term of
-  BApp _ _ -> parens (pprBTerm term)
-  -- BAbs _ -> parens (pprBTerm term)
-  BSucc _ -> parens (pprBTerm term)
-  BPred _ -> parens (pprBTerm term)
-  BFix _ -> parens (pprBTerm term)
-  _ -> pprBTerm term
+toClassString : BTerm -> String
+toClassString =
+  buildPrinter classWords (\n->String.repeat n "Meta" ++ "Object") ""
 
-parens : List String -> List String
-parens l = concat [["("], l, [")"]]
+buildPrinter :
+     (ReservedWord -> String)
+  -> (Int -> String)
+  -> String
+  -> BTerm
+  -> String
+buildPrinter rword printVarRef seperator =
+  let pTerm : BTerm -> String
+      pTerm term = case term of
+        BVar i -> printVarRef i
+        BAbs body -> rword RLambda ++ pTerm body
+        BBind value body ->
+          String.join
+            seperator
+            [rword RLet, pTerm value, rword RIn, pTerm body, rword REnd]
+        BApp term1 term2 -> pAppLeft term1 ++ seperator ++ pAtom term2
+        BIfZero term1 term2 term3 ->
+          String.join
+            seperator
+            (rword RIf :: List.map pAtom [term1, term2, term3])
+        BZero -> rword RZero
+        BSucc term1 -> rword RSucc ++ pAtom term1
+        BPred term1 -> rword RPred ++ pAtom term1
+        BFix term1 -> rword RFix ++ pAtom term1
 
-pprBAppLeft : BTerm -> List String
-pprBAppLeft term = case term of
-  BAbs _ -> parens (pprBTerm term)
-  _ -> pprBTerm term
+      pAtom : BTerm -> String
+      pAtom term = case term of
+        BApp _ _ -> parens (pTerm term)
+        -- BAbs _ -> parens (pTerm term)
+        BSucc _ -> parens (pTerm term)
+        BPred _ -> parens (pTerm term)
+        BFix _ -> parens (pTerm term)
+        _ -> pTerm term
+
+      pAppLeft : BTerm -> String
+      pAppLeft term = case term of
+        BAbs _ -> parens (pTerm term)
+        _ -> pTerm term
+
+      parens : String -> String
+      parens l = rword ROpen ++ l ++ rword RClose
+
+  in pTerm

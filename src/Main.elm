@@ -6,7 +6,6 @@ import Html.Events exposing (onInput, onClick)
 
 import String
 import Parser exposing (..)
-import Compiler exposing (..)
 import DeBruijn exposing (..)
 import Eval exposing (..)
 import Dict exposing (Dict)
@@ -71,17 +70,17 @@ view model =
     case model.term of
       Ok t -> div [] [
         div [] [ text "De Bruijn Encoded Lambda Caculus." ],
-        div [] [ text (String.join " " (pprBTerm t)) ],
+        div [] [ text (toDeBruijnString t) ],
         div [] [ text "Compiled to Class." ],
-        div [] [ text (compileToClass t) ],
+        div [] [ text (toClassString t) ],
         div [] [
           case eval t of
             Ok result ->
               div [] [
                 div [] [ text "De Bruijn output" ],
-                div [] [ text (String.join " " (pprBTerm result)) ],
+                div [] [ text (toDeBruijnString result) ],
                 div [] [ text "Class output" ],
-                div [] [ text (compileToClass result) ]
+                div [] [ text (toClassString result) ]
                 ]
             Err message -> div [] [ text message ]
           ]
