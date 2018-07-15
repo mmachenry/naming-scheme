@@ -11478,14 +11478,10 @@ var _user$project$DeBruijn$pprBTerm = function (term) {
 						}
 					})
 			};
-		case 'BNum':
-			return _elm_lang$core$Native_Utils.eq(_p0._0, 0) ? {
+		case 'BZero':
+			return {
 				ctor: '::',
 				_0: 'zero',
-				_1: {ctor: '[]'}
-			} : {
-				ctor: '::',
-				_0: 'undefined',
 				_1: {ctor: '[]'}
 			};
 		case 'BSucc':
@@ -11521,9 +11517,6 @@ var _user$project$DeBruijn$pprBAtom = function (term) {
 	var _p2 = term;
 	switch (_p2.ctor) {
 		case 'BApp':
-			return _user$project$DeBruijn$parens(
-				_user$project$DeBruijn$pprBTerm(term));
-		case 'BAbs':
 			return _user$project$DeBruijn$parens(
 				_user$project$DeBruijn$pprBTerm(term));
 		case 'BSucc':
@@ -11602,9 +11595,7 @@ var _user$project$DeBruijn$BPred = function (a) {
 var _user$project$DeBruijn$BSucc = function (a) {
 	return {ctor: 'BSucc', _0: a};
 };
-var _user$project$DeBruijn$BNum = function (a) {
-	return {ctor: 'BNum', _0: a};
-};
+var _user$project$DeBruijn$BZero = {ctor: 'BZero'};
 var _user$project$DeBruijn$BIfZero = F3(
 	function (a, b, c) {
 		return {ctor: 'BIfZero', _0: a, _1: b, _2: c};
@@ -11668,8 +11659,7 @@ var _user$project$DeBruijn$deBruijnEncode = F2(
 					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._1),
 					A2(_user$project$DeBruijn$deBruijnEncode, idStack, _p5._2));
 			case 'Num':
-				return _elm_lang$core$Result$Ok(
-					_user$project$DeBruijn$BNum(_p5._0));
+				return _elm_lang$core$Result$Ok(_user$project$DeBruijn$BZero);
 			case 'Succ':
 				return A2(
 					_elm_lang$core$Result$map,
@@ -11806,7 +11796,7 @@ var _user$project$DeBruijn$buildParser = F2(
 										A2(
 											_elm_community$parser_combinators$Combine_ops['$>'],
 											symbol(_user$project$DeBruijn$RZero),
-											_user$project$DeBruijn$BNum(0)),
+											_user$project$DeBruijn$BZero),
 										parseVarRef))))))));
 		var bAbstraction = A2(
 			_elm_community$parser_combinators$Combine_ops['<$>'],
@@ -11964,7 +11954,7 @@ var _user$project$Eval$subst = F3(
 					A3(_user$project$Eval$subst, depth, replacement, _p0._0),
 					A3(_user$project$Eval$subst, depth, replacement, _p0._1),
 					A3(_user$project$Eval$subst, depth, replacement, _p0._2));
-			case 'BNum':
+			case 'BZero':
 				return term;
 			case 'BSucc':
 				return _user$project$DeBruijn$BSucc(
@@ -11977,116 +11967,130 @@ var _user$project$Eval$subst = F3(
 					A3(_user$project$Eval$subst, depth, replacement, _p0._0));
 		}
 	});
+var _user$project$Eval$isValue = function (term) {
+	isValue:
+	while (true) {
+		var _p1 = term;
+		switch (_p1.ctor) {
+			case 'BAbs':
+				return true;
+			case 'BZero':
+				return true;
+			case 'BSucc':
+				var _v2 = _p1._0;
+				term = _v2;
+				continue isValue;
+			default:
+				return false;
+		}
+	}
+};
 var _user$project$Eval$step = function (term) {
-	var _p1 = term;
-	switch (_p1.ctor) {
+	var _p2 = term;
+	switch (_p2.ctor) {
 		case 'BVar':
 			return _elm_lang$core$Result$Err('Reached unsubstituded variable reference.');
 		case 'BAbs':
 			return _elm_lang$core$Result$Ok(term);
 		case 'BBind':
 			return _elm_lang$core$Result$Ok(
-				A3(_user$project$Eval$subst, 0, _p1._0, _p1._1));
+				A3(_user$project$Eval$subst, 0, _p2._0, _p2._1));
 		case 'BApp':
-			var _p4 = _p1._0;
-			var _p3 = _p1._1;
-			var _p2 = _p4;
-			switch (_p2.ctor) {
-				case 'BNum':
-					return _elm_lang$core$Result$Err('Cannot apply numberic value.');
-				case 'BAbs':
+			var _p5 = _p2._0;
+			var _p4 = _p2._1;
+			if (_user$project$Eval$isValue(_p5)) {
+				var _p3 = _p5;
+				if (_p3.ctor === 'BAbs') {
 					return _elm_lang$core$Result$Ok(
-						A3(_user$project$Eval$subst, 0, _p3, _p2._0));
-				default:
-					return A2(
-						_elm_lang$core$Result$andThen,
-						function (res) {
-							return _elm_lang$core$Result$Ok(
-								A2(_user$project$DeBruijn$BApp, res, _p3));
-						},
-						_user$project$Eval$step(_p4));
+						A3(_user$project$Eval$subst, 0, _p4, _p3._0));
+				} else {
+					return _elm_lang$core$Result$Err('Cannot apply numberic value.');
+				}
+			} else {
+				return A2(
+					_elm_lang$core$Result$andThen,
+					function (res) {
+						return _elm_lang$core$Result$Ok(
+							A2(_user$project$DeBruijn$BApp, res, _p4));
+					},
+					_user$project$Eval$step(_p5));
 			}
 		case 'BIfZero':
-			var _p8 = _p1._1;
-			var _p7 = _p1._0;
-			var _p6 = _p1._2;
-			var _p5 = _p7;
-			switch (_p5.ctor) {
-				case 'BNum':
-					if (_p5._0 === 0) {
-						return _elm_lang$core$Result$Ok(_p8);
-					} else {
-						return _elm_lang$core$Result$Ok(_p6);
-					}
-				case 'BAbs':
-					return _elm_lang$core$Result$Err('Not a number in conditional.');
-				default:
-					return A2(
-						_elm_lang$core$Result$andThen,
-						function (res) {
-							return _elm_lang$core$Result$Ok(
-								A3(_user$project$DeBruijn$BIfZero, res, _p8, _p6));
-						},
-						_user$project$Eval$step(_p7));
+			var _p9 = _p2._1;
+			var _p8 = _p2._0;
+			var _p7 = _p2._2;
+			if (_user$project$Eval$isValue(_p8)) {
+				var _p6 = _p8;
+				switch (_p6.ctor) {
+					case 'BZero':
+						return _elm_lang$core$Result$Ok(_p9);
+					case 'BSucc':
+						return _elm_lang$core$Result$Ok(_p7);
+					case 'BAbs':
+						return _elm_lang$core$Result$Err('Not a number in conditional.');
+					default:
+						return _elm_lang$core$Result$Err('Not a value.');
+				}
+			} else {
+				return A2(
+					_elm_lang$core$Result$andThen,
+					function (res) {
+						return _elm_lang$core$Result$Ok(
+							A3(_user$project$DeBruijn$BIfZero, res, _p9, _p7));
+					},
+					_user$project$Eval$step(_p8));
 			}
-		case 'BNum':
+		case 'BZero':
 			return _elm_lang$core$Result$Ok(term);
 		case 'BSucc':
-			var _p10 = _p1._0;
-			var _p9 = _p10;
-			switch (_p9.ctor) {
-				case 'BNum':
-					return _elm_lang$core$Result$Ok(
-						_user$project$DeBruijn$BNum(_p9._0 + 1));
-				case 'BAbs':
-					return _elm_lang$core$Result$Err('Not a number in succ.');
-				default:
-					return A2(
-						_elm_lang$core$Result$map,
-						_user$project$DeBruijn$BSucc,
-						_user$project$Eval$step(_p10));
+			var _p11 = _p2._0;
+			if (_user$project$Eval$isValue(_p11)) {
+				var _p10 = _p11;
+				if (_p10.ctor === 'BAbs') {
+					return _elm_lang$core$Result$Err('Cannot apply succ to non-number.');
+				} else {
+					return _elm_lang$core$Result$Ok(term);
+				}
+			} else {
+				return A2(
+					_elm_lang$core$Result$map,
+					_user$project$DeBruijn$BSucc,
+					_user$project$Eval$step(_p11));
 			}
 		case 'BPred':
-			var _p12 = _p1._0;
-			var _p11 = _p12;
-			switch (_p11.ctor) {
-				case 'BNum':
-					if (_p11._0 === 0) {
-						return _elm_lang$core$Result$Err('Cannot subtract from 0.');
-					} else {
-						return _elm_lang$core$Result$Ok(
-							_user$project$DeBruijn$BNum(_p11._0 - 1));
-					}
-				case 'BAbs':
-					return _elm_lang$core$Result$Err('Not a number in succ.');
-				default:
-					return A2(
-						_elm_lang$core$Result$map,
-						_user$project$DeBruijn$BPred,
-						_user$project$Eval$step(_p12));
+			var _p13 = _p2._0;
+			if (_user$project$Eval$isValue(_p13)) {
+				var _p12 = _p13;
+				switch (_p12.ctor) {
+					case 'BAbs':
+						return _elm_lang$core$Result$Err('Cannot apply pred to non-number.');
+					case 'BSucc':
+						return _elm_lang$core$Result$Ok(_p12._0);
+					case 'BZero':
+						return _elm_lang$core$Result$Err('Cannot apply pred to zero.');
+					default:
+						return _elm_lang$core$Result$Err('Not a value');
+				}
+			} else {
+				return A2(
+					_elm_lang$core$Result$map,
+					_user$project$DeBruijn$BPred,
+					_user$project$Eval$step(_p13));
 			}
 		default:
-			var _p13 = _p1._0;
+			var _p14 = _p2._0;
 			return _elm_lang$core$Result$Ok(
 				A2(
 					_user$project$DeBruijn$BApp,
-					_p13,
-					_user$project$DeBruijn$BFix(_p13)));
+					_p14,
+					_user$project$DeBruijn$BFix(_p14)));
 	}
 };
 var _user$project$Eval$eval = function (term) {
-	var _p14 = term;
-	switch (_p14.ctor) {
-		case 'BNum':
-			return _elm_lang$core$Result$Ok(term);
-		case 'BAbs':
-			return _elm_lang$core$Result$Ok(term);
-		default:
-			return A2(
-				_elm_lang$core$Result$andThen,
-				_user$project$Eval$eval,
-				_user$project$Eval$step(term));
-	}
+	return _user$project$Eval$isValue(term) ? _elm_lang$core$Result$Ok(term) : A2(
+		_elm_lang$core$Result$andThen,
+		_user$project$Eval$eval,
+		_user$project$Eval$step(term));
 };
 var _user$project$Main$radio = F2(
 	function (group, _p0) {
@@ -12273,7 +12277,7 @@ var _user$project$Main$view = function (model) {
 					_0: function () {
 						var _p4 = model.term;
 						if (_p4.ctor === 'Ok') {
-							var _p5 = _p4._0;
+							var _p7 = _p4._0;
 							return A2(
 								_elm_lang$html$Html$div,
 								{ctor: '[]'},
@@ -12298,7 +12302,7 @@ var _user$project$Main$view = function (model) {
 													A2(
 														_elm_lang$core$String$join,
 														' ',
-														_user$project$DeBruijn$pprBTerm(_p5))),
+														_user$project$DeBruijn$pprBTerm(_p7))),
 												_1: {ctor: '[]'}
 											}),
 										_1: {
@@ -12319,7 +12323,7 @@ var _user$project$Main$view = function (model) {
 													{
 														ctor: '::',
 														_0: _elm_lang$html$Html$text(
-															_user$project$Compiler$compileToClass(_p5)),
+															_user$project$Compiler$compileToClass(_p7)),
 														_1: {ctor: '[]'}
 													}),
 												_1: {
@@ -12329,23 +12333,77 @@ var _user$project$Main$view = function (model) {
 														{ctor: '[]'},
 														{
 															ctor: '::',
-															_0: _elm_lang$html$Html$text('Output'),
+															_0: function () {
+																var _p5 = _user$project$Eval$eval(_p7);
+																if (_p5.ctor === 'Ok') {
+																	var _p6 = _p5._0;
+																	return A2(
+																		_elm_lang$html$Html$div,
+																		{ctor: '[]'},
+																		{
+																			ctor: '::',
+																			_0: A2(
+																				_elm_lang$html$Html$div,
+																				{ctor: '[]'},
+																				{
+																					ctor: '::',
+																					_0: _elm_lang$html$Html$text('De Bruijn output'),
+																					_1: {ctor: '[]'}
+																				}),
+																			_1: {
+																				ctor: '::',
+																				_0: A2(
+																					_elm_lang$html$Html$div,
+																					{ctor: '[]'},
+																					{
+																						ctor: '::',
+																						_0: _elm_lang$html$Html$text(
+																							A2(
+																								_elm_lang$core$String$join,
+																								' ',
+																								_user$project$DeBruijn$pprBTerm(_p6))),
+																						_1: {ctor: '[]'}
+																					}),
+																				_1: {
+																					ctor: '::',
+																					_0: A2(
+																						_elm_lang$html$Html$div,
+																						{ctor: '[]'},
+																						{
+																							ctor: '::',
+																							_0: _elm_lang$html$Html$text('Class output'),
+																							_1: {ctor: '[]'}
+																						}),
+																					_1: {
+																						ctor: '::',
+																						_0: A2(
+																							_elm_lang$html$Html$div,
+																							{ctor: '[]'},
+																							{
+																								ctor: '::',
+																								_0: _elm_lang$html$Html$text(
+																									_user$project$Compiler$compileToClass(_p6)),
+																								_1: {ctor: '[]'}
+																							}),
+																						_1: {ctor: '[]'}
+																					}
+																				}
+																			}
+																		});
+																} else {
+																	return A2(
+																		_elm_lang$html$Html$div,
+																		{ctor: '[]'},
+																		{
+																			ctor: '::',
+																			_0: _elm_lang$html$Html$text(_p5._0),
+																			_1: {ctor: '[]'}
+																		});
+																}
+															}(),
 															_1: {ctor: '[]'}
 														}),
-													_1: {
-														ctor: '::',
-														_0: A2(
-															_elm_lang$html$Html$div,
-															{ctor: '[]'},
-															{
-																ctor: '::',
-																_0: _elm_lang$html$Html$text(
-																	_elm_lang$core$Basics$toString(
-																		_user$project$Eval$eval(_p5))),
-																_1: {ctor: '[]'}
-															}),
-														_1: {ctor: '[]'}
-													}
+													_1: {ctor: '[]'}
 												}
 											}
 										}

@@ -18,10 +18,7 @@ main = Html.program {
   subscriptions = subscriptions
   }
 
-type Language =
-    LambdaCalculus
-  | DeBruijn
-  | Class
+type Language = LambdaCalculus | DeBruijn | Class
 
 type Msg =
     EditProgram String
@@ -66,20 +63,29 @@ view model =
   div [] [
     fieldset [] (List.map (radio "langInput") [
         ("Lambda Calculus", SwitchTo LambdaCalculus),
-        ("DeBruijn", SwitchTo DeBruijn),
+        ("De Bruijn", SwitchTo DeBruijn),
         ("Class", SwitchTo Class)]),
     div [] [
       textarea [onInput EditProgram] [ text model.program ],
       div [] [ button [onClick RunProgram] [ text "Run" ] ] ],
     case model.term of
       Ok t -> div [] [
-                div [] [ text "DeBruijn Encoded Lambda Caculus." ],
-                div [] [ text (String.join " " (pprBTerm t)) ],
-                div [] [ text "Compiled to Class." ],
-                div [] [ text (compileToClass t) ],
-                div [] [ text "Output" ],
-                div [] [ text (toString (eval t)) ]
-                  ]
+        div [] [ text "De Bruijn Encoded Lambda Caculus." ],
+        div [] [ text (String.join " " (pprBTerm t)) ],
+        div [] [ text "Compiled to Class." ],
+        div [] [ text (compileToClass t) ],
+        div [] [
+          case eval t of
+            Ok result ->
+              div [] [
+                div [] [ text "De Bruijn output" ],
+                div [] [ text (String.join " " (pprBTerm result)) ],
+                div [] [ text "Class output" ],
+                div [] [ text (compileToClass result) ]
+                ]
+            Err message -> div [] [ text message ]
+          ]
+        ]
       Err message -> div [] [ text message ]
     ]
 
