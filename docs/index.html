@@ -11277,7 +11277,10 @@ var _user$project$Parser$abstraction = A2(
 		_user$project$Parser$Abs,
 		A2(
 			_elm_community$parser_combinators$Combine_ops['*>'],
-			_user$project$Parser$symbol('lambda'),
+			A2(
+				_elm_community$parser_combinators$Combine_ops['<|>'],
+				_user$project$Parser$symbol('λ'),
+				_user$project$Parser$symbol('lambda')),
 			_user$project$Parser$identifier)),
 	A2(
 		_elm_community$parser_combinators$Combine_ops['*>'],

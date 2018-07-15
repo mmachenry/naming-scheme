@@ -1,4 +1,13 @@
 UI updates
-Refactor to easily hide debug info
-Consider having an if-then-else syntax to increase words
-Recheck paren output
+---
+Fix the width of the text area or something reasonable
+Default an option checked on the radio button
+Add spacing for the output
+Make headers more prominent
+Collapse often unneeded output
+
+Syntax considerations
+---
+Eliminate the use of the "end" keyword?
+Consider having an if-then-else syntax to increase words.
+Consider a application operator that associates right in lieu of parenthesis.
