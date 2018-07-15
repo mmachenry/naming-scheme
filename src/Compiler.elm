@@ -15,7 +15,6 @@ compileToClass term = String.join "" (List.map alphaConvert (pprBTerm term))
 
 alphaConvert : String -> String
 alphaConvert word = case word of
-  -- "[variable] ": "/(Meta)*Object/",
   "λ" -> "Proxy"
   "fix" -> "Helper"
   "(" -> "Parser"
@@ -27,6 +26,7 @@ alphaConvert word = case word of
   "let" -> "Global"
   "in" -> "Decorator"
   "end" -> "Service"
-  str -> case String.toInt str of
-           Ok n -> String.repeat n "Meta" ++ "Object"
-           Err _ -> "!!!"
+  str ->
+    case String.toInt str of
+      Ok n -> String.repeat n "Meta" ++ "Object"
+      Err _ -> "!!!"

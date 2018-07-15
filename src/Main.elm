@@ -18,8 +18,8 @@ main = Html.program {
   }
 
 type alias Model = {
-  pcf : String,
-  term : Result String Term
+  program : String,
+  term : Result String BTerm
   }
 
 type Msg =
@@ -27,7 +27,7 @@ type Msg =
   | RunProgram
 
 initModel = {
-  pcf = "",
+  program = "",
   term = Err "No code"
   }
 
@@ -36,14 +36,14 @@ view model =
   div [] [
       div [] [ text "Input PCF program" ],
       div [] [
-        textarea [onInput EditProgram] [ text model.pcf ],
-        button [onClick RunProgram] [ text "Run" ] ],
+        textarea [onInput EditProgram] [ text model.program ],
+        div [] [ button [onClick RunProgram] [ text "Run" ] ] ],
       case model.term of
         Ok t -> div [] [
-                  div [] [ text "Program" ],
-                  div [] [ text (pprTerm t) ],
-                  div [] [ text "AST" ],
-                  div [] [ text (toString model.term) ],
+                  div [] [ text "DeBruijn Encoded Lambda Caculus." ],
+                  div [] [ text (String.join " " (pprBTerm t)) ],
+                  div [] [ text "Compiled to Class." ],
+                  div [] [ text (compileToClass t) ],
                   div [] [ text "Output" ],
                   div [] [ text (toString (eval t)) ]
                   ]
@@ -55,8 +55,10 @@ update msg model = (updateModel msg model, Cmd.none)
 
 updateModel : Msg -> Model -> Model
 updateModel msg model = case msg of
-  EditProgram str -> { model | pcf = str }
-  RunProgram -> { model | term = parsePCF model.pcf }
+  EditProgram str -> { model | program = str }
+  RunProgram -> { model | term = parsePCF model.program
+                                 |> Result.andThen (deBruijnEncode [])}
 
 subscriptions : Model -> Sub Msg
 subscriptions model = Sub.none
+
