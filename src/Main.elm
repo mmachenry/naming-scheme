@@ -59,12 +59,30 @@ subscriptions model = Sub.none
 
 view : Model -> Html Msg
 view model =
+  div [style []] [
+    div [style [("width", "80%"), ("margin","auto")]] [
+      div [] [
+        fieldset [] (List.map (radio "langInput") [
+          ("Lambda Calculus", SwitchTo LambdaCalculus),
+          ("De Bruijn", SwitchTo DeBruijn),
+          ("Class", SwitchTo Class)]),
+        editor model,
+        output model
+        ]
+    ]
+ ]
+
+editor : Model -> Html Msg
+editor model =
   div [] [
-    fieldset [] (List.map (radio "langInput") [
-      ("Lambda Calculus", SwitchTo LambdaCalculus),
-      ("De Bruijn", SwitchTo DeBruijn),
-      ("Class", SwitchTo Class)]),
-    editor model,
+      div [] [ button [onClick RunProgram] [ text "Run" ] ],
+      textarea [style [("width", "100%")],
+                rows 20,
+                onInput EditProgram]
+               [ text model.program ] ]
+
+output : Model -> Html Msg
+output model =
     case model.term of
       Ok t -> div [] [
         div [] [ text "De Bruijn Encoded Lambda Caculus." ],
@@ -84,14 +102,6 @@ view model =
           ]
         ]
       Err message -> div [] [ text message ]
-    ]
-
-editor : Model -> Html Msg
-editor model =
-  div [style [("text-align", "center")]] [
-    div [] [ button [onClick RunProgram] [ text "Run" ] ],
-    div [] [
-    textarea [style [("width", "80%")], onInput EditProgram] [ text model.program ] ]
 
 radio : String -> (String, msg) -> Html msg
 radio group (n, msg) =

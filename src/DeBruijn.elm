@@ -20,7 +20,7 @@ type BTerm =
   | BFix BTerm
 
 type ReservedWord =
-  RLambda | RLet | RIn | REnd | RIf | RZero |
+  RLambda | RLet | RIn | REnd | RIf | RThen | RElse | RZero |
   RSucc | RPred | RFix | ROpen | RClose
 
 deBruijnEncode : List Identifier -> Term -> Result String BTerm
@@ -90,9 +90,9 @@ buildParser rword parseVarRef =
 
       bIfZero : Parser () BTerm
       bIfZero =
-        symbol RIf *> whitespace *> lazy (\_->bAtom) >>= \condition->
-          whitespace *> lazy (\_->bAtom) >>= \consequent->
-            whitespace *> lazy (\_->bAtom) >>= \alternate->
+        symbol RIf *> lazy (\_->bTerm) >>= \condition->
+          symbol RThen *> lazy (\_->bTerm) >>= \consequent->
+            symbol RElse *> lazy (\_->bTerm) >>= \alternate->
               succeed (BIfZero condition consequent alternate)
 
       symbol : ReservedWord -> Parser () String
@@ -107,6 +107,8 @@ lambdaCalcWords r = case r of
   RIn -> "in"
   REnd -> "end"
   RIf -> "if"
+  RThen -> "then"
+  RElse -> "else"
   RZero -> "zero"
   RSucc -> "succ"
   RPred -> "pred"
@@ -123,6 +125,8 @@ classWords r = case r of
   RIn -> "Decorator"
   REnd -> "Service"
   RIf -> "Initializer"
+  RThen -> "Factory"
+  RElse -> "Bean"
   RZero -> "Observer"
   RSucc -> "Session"
   RPred -> "Prototype"
@@ -163,7 +167,9 @@ buildPrinter rword printVarRef seperator =
         BIfZero term1 term2 term3 ->
           String.join
             seperator
-            (rword RIf :: List.map pAtom [term1, term2, term3])
+            ([rword RIf, pTerm term1,
+              rword RThen, pTerm term2,
+              rword RElse, pTerm term3])
         BZero -> rword RZero
         BSucc term1 -> rword RSucc ++ pAtom term1
         BPred term1 -> rword RPred ++ pAtom term1
