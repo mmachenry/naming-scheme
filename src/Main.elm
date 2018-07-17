@@ -61,12 +61,10 @@ view : Model -> Html Msg
 view model =
   div [] [
     fieldset [] (List.map (radio "langInput") [
-        ("Lambda Calculus", SwitchTo LambdaCalculus),
-        ("De Bruijn", SwitchTo DeBruijn),
-        ("Class", SwitchTo Class)]),
-    div [] [
-      textarea [onInput EditProgram] [ text model.program ],
-      div [] [ button [onClick RunProgram] [ text "Run" ] ] ],
+      ("Lambda Calculus", SwitchTo LambdaCalculus),
+      ("De Bruijn", SwitchTo DeBruijn),
+      ("Class", SwitchTo Class)]),
+    editor model,
     case model.term of
       Ok t -> div [] [
         div [] [ text "De Bruijn Encoded Lambda Caculus." ],
@@ -87,6 +85,13 @@ view model =
         ]
       Err message -> div [] [ text message ]
     ]
+
+editor : Model -> Html Msg
+editor model =
+  div [style [("text-align", "center")]] [
+    div [] [ button [onClick RunProgram] [ text "Run" ] ],
+    div [] [
+    textarea [style [("width", "80%")], onInput EditProgram] [ text model.program ] ]
 
 radio : String -> (String, msg) -> Html msg
 radio group (n, msg) =
