@@ -9,6 +9,7 @@ import Parser exposing (..)
 import DeBruijn exposing (..)
 import Eval exposing (..)
 import Dict exposing (Dict)
+import List.Extra exposing (elemIndex)
 
 main = Html.program {
   init = (initModel, Cmd.none),
@@ -17,7 +18,7 @@ main = Html.program {
   subscriptions = subscriptions
   }
 
-type Language = LambdaCalculus | DeBruijn | Class
+type Language = LambdaCalculus | DeBruijn | NamingScheme
 
 type Msg =
     EditProgram String
@@ -48,7 +49,7 @@ updateModel msg model = case msg of
                    LambdaCalculus ->
                      (\p->parsePCF p |> Result.andThen (deBruijnEncode []))
                    DeBruijn -> parseDeBruijn
-                   Class -> parseClass
+                   NamingScheme -> parseNamingScheme
            in currentParser model.program }
   SwitchTo l -> { model | inputLang = l }
 
@@ -65,7 +66,7 @@ view model =
         fieldset [] (List.map (radio "langInput") [
           ("Lambda Calculus", SwitchTo LambdaCalculus),
           ("De Bruijn", SwitchTo DeBruijn),
-          ("Class", SwitchTo Class)]),
+          ("NamingScheme", SwitchTo NamingScheme)]),
         editor model,
         output model
         ]
@@ -87,16 +88,16 @@ output model =
       Ok t -> div [] [
         div [] [ text "De Bruijn Encoded Lambda Caculus." ],
         div [] [ text (toDeBruijnString t) ],
-        div [] [ text "Compiled to Class." ],
-        div [] [ text (toClassString t) ],
+        div [] [ text "Compiled to NamingScheme." ],
+        div [] [ text (toNamingSchemeString t) ],
         div [] [
           case eval t of
             Ok result ->
               div [] [
                 div [] [ text "De Bruijn output" ],
                 div [] [ text (toDeBruijnString result) ],
-                div [] [ text "Class output" ],
-                div [] [ text (toClassString result) ]
+                div [] [ text "NamingScheme output" ],
+                div [] [ text (toNamingSchemeString result) ]
                 ]
             Err message -> div [] [ text message ]
           ]
@@ -107,3 +108,28 @@ radio : String -> (String, msg) -> Html msg
 radio group (n, msg) =
   label []
     [ input [ type_ "radio", name group, onClick msg ] [] , text n]
+
+deBruijnEncode : List Identifier -> Term -> Result String BTerm
+deBruijnEncode idStack term = case term of
+  Var ident ->
+    case elemIndex ident idStack of
+      Just i -> Ok (BVar i)
+      Nothing ->
+        case ident of
+          "zero" -> Ok (BPrim RZero)
+          "succ" -> Ok (BPrim RSucc)
+          "pred" -> Ok (BPrim RPred)
+          "fix" -> Ok (BPrim RFix)
+          _ -> Err ("Unbound identifier: " ++ ident)
+  Abs ident body ->
+    Result.map BAbs (deBruijnEncode (ident::idStack) body)
+  Bind ident value body ->
+    Result.map2 BBind (deBruijnEncode idStack value)
+                      (deBruijnEncode (ident::idStack) body)
+  App term1 term2 ->
+    Result.map2 BApp (deBruijnEncode idStack term1)
+                     (deBruijnEncode idStack term2)
+  IfZero term1 term2 term3 ->
+    Result.map3 BIfZero (deBruijnEncode idStack term1)
+                        (deBruijnEncode idStack term2)
+                        (deBruijnEncode idStack term3)

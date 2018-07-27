@@ -23,34 +23,11 @@ type ReservedWord =
   RLambda | RLet | RIn | REnd | RIf | RThen | RElse | RZero |
   RSucc | RPred | RFix | ROpen | RClose
 
-deBruijnEncode : List Identifier -> Term -> Result String BTerm
-deBruijnEncode idStack term = case term of
-  Var ident ->
-    case elemIndex ident idStack of
-      Just i -> Ok (BVar i)
-      Nothing -> Err ("Unbound identifier: " ++ ident)
-  Abs ident body ->
-    Result.map BAbs (deBruijnEncode (ident::idStack) body)
-  Bind ident value body ->
-    Result.map2 BBind (deBruijnEncode idStack value)
-                      (deBruijnEncode (ident::idStack) body)
-  App term1 term2 ->
-    Result.map2 BApp (deBruijnEncode idStack term1)
-                     (deBruijnEncode idStack term2)
-  IfZero term1 term2 term3 ->
-    Result.map3 BIfZero (deBruijnEncode idStack term1)
-                        (deBruijnEncode idStack term2)
-                        (deBruijnEncode idStack term3)
-  Num n -> Ok BZero -- FIXME make not just zero
-  Succ term -> Result.map BSucc (deBruijnEncode idStack term)
-  Pred term -> Result.map BPred (deBruijnEncode idStack term)
-  Fix term -> Result.map BFix (deBruijnEncode idStack term)
-
 -- Parse
 
 parseDeBruijn = buildParser lambdaCalcWords lambdaCalcVarRef
 
-parseClass = buildParser classWords classVarRef
+parseNamingScheme = buildParser namingSchemeWords namingSchemeVarRef
 
 buildParser :
      (ReservedWord -> String)
@@ -118,8 +95,8 @@ lambdaCalcWords r = case r of
 
 lambdaCalcVarRef = BVar <$> (whitespace *> Combine.Num.int <* whitespace)
 
-classWords : ReservedWord -> String
-classWords r = case r of
+namingSchemeWords : ReservedWord -> String
+namingSchemeWords r = case r of
   RLambda -> "Proxy"
   RLet -> "Global"
   RIn -> "Decorator"
@@ -134,7 +111,7 @@ classWords r = case r of
   ROpen -> "Parser"
   RClose -> "Adapter"
 
-classVarRef =
+namingSchemeVarRef =
   many (string "Meta") >>= \metaStr->
     string "Object" >>= \_->
       succeed (BVar (List.length metaStr))
@@ -144,9 +121,9 @@ classVarRef =
 toDeBruijnString : BTerm -> String
 toDeBruijnString = buildPrinter lambdaCalcWords toString " "
 
-toClassString : BTerm -> String
-toClassString =
-  buildPrinter classWords (\n->String.repeat n "Meta" ++ "Object") ""
+toNamingSchemeString : BTerm -> String
+toNamingSchemeString =
+  buildPrinter namingSchemeWords (\n->String.repeat n "Meta" ++ "Object") ""
 
 buildPrinter :
      (ReservedWord -> String)
