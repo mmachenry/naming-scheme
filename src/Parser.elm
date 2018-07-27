@@ -7,13 +7,9 @@ type alias Identifier = String
 type Term =
     Var Identifier
   | Abs Identifier Term
-  | Bind Identifier Term Term
   | App Term Term
+  | Bind Identifier Term Term
   | IfZero Term Term Term
-  | Num Int
-  | Succ Term
-  | Pred Term
-  | Fix Term
 
 parsePCF : String -> Result String Term
 parsePCF input =
@@ -30,10 +26,6 @@ atom =
   <|> lazy (\_->abstraction)
   <|> lazy (\_->binding)
   <|> lazy (\_->ifZero)
-  <|> symbol "succ" *> map Succ (lazy (\_->atom))
-  <|> symbol "pred" *> map Pred (lazy (\_->atom))
-  <|> symbol "fix" *> map Fix (lazy (\_->atom))
-  <|> symbol "0" $> Num 0
   <|> (Var <$> identifier)
 
 abstraction : Parser () Term
@@ -51,9 +43,9 @@ binding =
 
 ifZero : Parser () Term
 ifZero =
-  symbol "if0" *> whitespace *> lazy (\_->atom) >>= \condition->
-    whitespace *> lazy (\_->atom) >>= \consequent->
-      whitespace *> lazy (\_->atom) >>= \alternate->
+  symbol "if" *> lazy (\_->term) >>= \condition->
+    symbol "then" *> lazy (\_->term) >>= \consequent->
+      symbol "else" *> lazy (\_->term) >>= \alternate->
         succeed (IfZero condition consequent alternate)
 
 symbol : String -> Parser () String
@@ -63,8 +55,5 @@ identifier = (whitespace *> regex "[a-zA-Z0-9]+") >>= \word->
   if List.member word reservedWords
   then fail "Reserved word cannot be an identifier"
   else succeed word
-
-reservedWords = [
-  "lambda", "let", "=", "in", "end",
-  "if0", "0", "succ", "pred", "fix"]
-
+ 
+reservedWords = ["λ", "lambda", "let", "=", "in", "if", "then", "else"]
