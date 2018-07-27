@@ -41,7 +41,7 @@ buildParser rword parseVarRef =
         <|> symbol RSucc $> BPrim RSucc
         <|> symbol RPred $> BPrim RPred
         <|> symbol RFix $> BPrim RFix
-        <|> symbol RZero $> BPrimt RZero
+        <|> symbol RZero $> BPrim RZero
         <|> parseVarRef 
 
       bAbstraction : Parser () BTerm

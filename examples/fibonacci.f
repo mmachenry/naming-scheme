@@ -1,5 +1,11 @@
-let add = fix λf.λn.λm.if0 n m (f (pred n) (succ m)) in
-let fib = fix λf.λn.if0 n (succ 0)
-                        (if0 (pred n) (succ 0)
-                             (add (f (pred n)) (f (pred (pred n))))) in
-fib (succ (succ (succ 0))) end end
+let add = fix λf.λn.λm.
+  if n
+  then m
+  else f (pred n) (succ m)
+in let fib = fix λf.λn.
+  if n
+  then succ zero
+  else if pred n
+       then succ zero 
+       else add (f (pred n)) (f (pred (pred n)))
+in fib (succ (succ (succ zero)))
