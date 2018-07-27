@@ -4,8 +4,6 @@ import Parser exposing (..)
 import Combine exposing (..)
 import Combine.Num
 import Result exposing (Result)
-import List.Extra exposing (elemIndex)
-import List exposing (concat, concatMap)
 import Dict exposing (Dict)
 
 type BTerm =
@@ -14,13 +12,10 @@ type BTerm =
   | BBind BTerm BTerm
   | BApp BTerm BTerm
   | BIfZero BTerm BTerm BTerm
-  | BZero
-  | BSucc BTerm
-  | BPred BTerm
-  | BFix BTerm
+  | BPrim ReservedWord
 
 type ReservedWord =
-  RLambda | RLet | RIn | REnd | RIf | RThen | RElse | RZero |
+  RLambda | RLet | RIn | RIf | RThen | RElse | RZero |
   RSucc | RPred | RFix | ROpen | RClose
 
 -- Parse
@@ -34,13 +29,7 @@ buildParser :
   -> (Parser () BTerm)
   -> (String -> Result String BTerm)
 buildParser rword parseVarRef =
-  let parseString : String -> Result String BTerm
-      parseString input =
-        case parse bTerm input of
-          Ok (_, stream, result) -> Ok result
-          Err (_, stream, errors) -> Err (String.join " or " errors)
-
-      bTerm : Parser () BTerm
+  let bTerm : Parser () BTerm
       bTerm = chainl (whitespace $> BApp) (lazy (\_->bAtom))
 
       bAtom : Parser () BTerm
@@ -49,10 +38,10 @@ buildParser rword parseVarRef =
         <|> lazy (\_->bAbstraction)
         <|> lazy (\_->bBinding)
         <|> lazy (\_->bIfZero)
-        <|> symbol RSucc *> map BSucc (lazy (\_->bAtom))
-        <|> symbol RPred *> map BPred (lazy (\_->bAtom))
-        <|> symbol RFix *> map BFix (lazy (\_->bAtom))
-        <|> symbol RZero $> BZero
+        <|> symbol RSucc $> BPrim RSucc
+        <|> symbol RPred $> BPrim RPred
+        <|> symbol RFix $> BPrim RFix
+        <|> symbol RZero $> BPrimt RZero
         <|> parseVarRef 
 
       bAbstraction : Parser () BTerm
@@ -75,14 +64,20 @@ buildParser rword parseVarRef =
       symbol : ReservedWord -> Parser () String
       symbol r = whitespace *> string (rword r)
 
-  in parseString
+  in parseString bTerm
+
+parseString : Parser () a -> String -> Result String a
+parseString parser input =
+  case parse parser input of
+    Ok (_, stream, result) -> Ok result
+    Err (_, stream, errors) -> Err (String.join " or " errors)
+
 
 lambdaCalcWords : ReservedWord -> String
 lambdaCalcWords r = case r of
   RLambda -> "λ"
   RLet -> "let"
   RIn -> "in"
-  REnd -> "end"
   RIf -> "if"
   RThen -> "then"
   RElse -> "else"
@@ -100,7 +95,6 @@ namingSchemeWords r = case r of
   RLambda -> "Proxy"
   RLet -> "Global"
   RIn -> "Decorator"
-  REnd -> "Service"
   RIf -> "Initializer"
   RThen -> "Factory"
   RElse -> "Bean"
@@ -139,7 +133,7 @@ buildPrinter rword printVarRef seperator =
         BBind value body ->
           String.join
             seperator
-            [rword RLet, pTerm value, rword RIn, pTerm body, rword REnd]
+            [rword RLet, pTerm value, rword RIn, pTerm body]
         BApp term1 term2 -> pAppLeft term1 ++ seperator ++ pAtom term2
         BIfZero term1 term2 term3 ->
           String.join
@@ -147,18 +141,11 @@ buildPrinter rword printVarRef seperator =
             ([rword RIf, pTerm term1,
               rword RThen, pTerm term2,
               rword RElse, pTerm term3])
-        BZero -> rword RZero
-        BSucc term1 -> rword RSucc ++ pAtom term1
-        BPred term1 -> rword RPred ++ pAtom term1
-        BFix term1 -> rword RFix ++ pAtom term1
+        BPrim prim -> rword prim
 
       pAtom : BTerm -> String
       pAtom term = case term of
         BApp _ _ -> parens (pTerm term)
-        -- BAbs _ -> parens (pTerm term)
-        BSucc _ -> parens (pTerm term)
-        BPred _ -> parens (pTerm term)
-        BFix _ -> parens (pTerm term)
         _ -> pTerm term
 
       pAppLeft : BTerm -> String
