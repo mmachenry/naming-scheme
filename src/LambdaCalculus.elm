@@ -51,7 +51,6 @@ binding =
     |= (lazy (\_->expr))
     |. keyword "in"
     |= (lazy (\_->expr))
-    |. keyword "end"
 
 ifZero : Parser Expr
 ifZero =
@@ -93,7 +92,7 @@ identifier =
   variable
     { start = Char.isLower,
       inner = Char.isLower,
-      reserved = Set.fromList ["let", "in", "end", "if", "then", "else"]
+      reserved = Set.fromList ["let", "in", "if", "then", "else"]
     }
 
 notFollowedBy : Parser a -> Parser ()
