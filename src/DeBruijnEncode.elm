@@ -2,7 +2,7 @@ module DeBruijnEncode exposing (deBruijnEncode)
 
 import LambdaCalculus exposing (Expr)
 import DeBruijn exposing (BExpr)
-import Operators exposing (Operator)
+import Operator exposing (Operator)
 
 deBruijnEncode : List Identifier -> Expr -> Result String BExpr
 encode idStack expr = case expr of

@@ -5,10 +5,12 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
 
 import String
-import Parse exposing (parse)
-import Print exposing (pExpr)
-import Eval exposing (eval)
+
+import LambdaCalculus
+import DeBruijn
+import DeBruijnEncode
 import NamingScheme
+import Eval
 
 main = Html.program {
   init = (initModel, Cmd.none),
@@ -47,7 +49,7 @@ updateModel msg model = case msg of
                  case model.inputLang of
                    LambdaCalculus ->
                      (\p->parse False p |> Result.andThen (DeBruijn.encode []))
-                   DeBruijn -> parse True
+                   DeBruijn -> LambdaCalculus.parse
                    NamingScheme -> NamingScheme.parse
            in currentParser model.program }
   SwitchTo l -> { model | inputLang = l }
@@ -90,7 +92,7 @@ output model =
         div [] [ text "Compiled to NamingScheme." ],
         div [] [ text (toNamingSchemeString t) ],
         div [] [
-          case eval t of
+          case Eval.eval t of
             Ok result ->
               div [] [
                 div [] [ text "De Bruijn output" ],

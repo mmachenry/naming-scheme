@@ -5,7 +5,7 @@ import Set
 import Parser exposing (..)
 import Parser.Expression exposing (..)
 import Parser.Extras exposing (parens, between)
-import Operators exposing (Operator(..))
+import Operator exposing (Operator(..))
 
 type alias Identifier = String
 
