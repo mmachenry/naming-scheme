@@ -1,49 +1,47 @@
 module Print exposing (..)
 
-import Parse exposing (Expr(..))
+import String
 
-toDeBruijnString : BExpr -> String
-toDeBruijnString = buildPrinter lambdaCalcWords toString " "
+pExpr : Expr -> String
+pExpr expr = case expr of
+  Var i -> i
+  Abs i body -> "λ" ++ i ++ "." ++ pExpr body
+  Bind i value body ->
+    String.join " " ["let", i, "=", pExpr value, "in", pExpr body]
+  -- TODO use associativity to pretty print and drop some parens
+  OpExpr op lhs rhs ->
+    parens (pExpr lhs) ++ binOpToString op ++ parens (pExpr rhs)
+  App expr1 expr2 -> String.join " " [pAppLeft expr1, pAtom expr2]
+  IfZero expr1 expr2 expr3 ->
+    String.join " " [
+      "if", pExpr expr1,
+      "then", pExpr expr2,
+      "else", pExpr expr3]
+  BVar i -> String.fromInt i
+  BAbs body -> "λ" ++ pExpr body
+  BBind value body -> String.join " " ["let", pExpr value, "in", pExpr body]
+  BPrim i -> i
 
-toNamingSchemeString : BExpr -> String
-toNamingSchemeString =
-  buildPrinter namingSchemeWords (\n->String.repeat n "Meta" ++ "Object") ""
+-- TODO review what is an atom for bin ops
+pAtom : Expr -> String
+pAtom expr = case expr of
+  App _ _ -> parens (pExpr expr)
+  _ -> pExpr expr
 
-buildPrinter :
-     (ReservedWord -> String)
-  -> (Int -> String)
-  -> String
-  -> BExpr
-  -> String
-buildPrinter rword printVarRef seperator =
-  let pTerm : BExpr -> String
-      pTerm term = case term of
-        BVar i -> printVarRef i
-        BAbs body -> rword RLambda ++ pTerm body
-        BBind value body ->
-          String.join
-            seperator
-            [rword RLet, pTerm value, rword RIn, pTerm body]
-        BApp term1 term2 -> pAppLeft term1 ++ seperator ++ pAtom term2
-        BIfZero term1 term2 term3 ->
-          String.join
-            seperator
-            ([rword RIf, pTerm term1,
-              rword RThen, pTerm term2,
-              rword RElse, pTerm term3])
-        BPrim prim -> rword prim
+-- TODO review what is an app left for bin ops
+pAppLeft : Expr -> String
+pAppLeft expr = case expr of
+  Abs _ _ -> parens (pExpr expr)
+  BAbs _ -> parens (pExpr expr)
+  _ -> pExpr expr
 
-      pAtom : BExpr -> String
-      pAtom term = case term of
-        BApp _ _ -> parens (pTerm term)
-        _ -> pTerm term
+parens : String -> String
+parens l = "(" ++ l ++ ")"
 
-      pAppLeft : BExpr -> String
-      pAppLeft term = case term of
-        BAbs _ -> parens (pTerm term)
-        _ -> pTerm term
+binOpToString : BinOp -> String
+binOpToString op = case op of
+  Add -> "+"
+  Sub -> "-"
+  Mul -> "*"
+  Div -> "/"
 
-      parens : String -> String
-      parens l = rword ROpen ++ l ++ rword RClose
-
-  in pTerm

@@ -5,11 +5,10 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
 
 import String
-import Parser exposing (..)
-import DeBruijn exposing (..)
-import Eval exposing (..)
-import Dict exposing (Dict)
-import List.Extra exposing (elemIndex)
+import Parse exposing (parse)
+import Print exposing (pExpr)
+import Eval exposing (eval)
+import NamingScheme
 
 main = Html.program {
   init = (initModel, Cmd.none),
@@ -47,9 +46,9 @@ updateModel msg model = case msg of
     term = let currentParser =
                  case model.inputLang of
                    LambdaCalculus ->
-                     (\p->parsePCF p |> Result.andThen (deBruijnEncode []))
-                   DeBruijn -> parseDeBruijn
-                   NamingScheme -> parseNamingScheme
+                     (\p->parse False p |> Result.andThen (DeBruijn.encode []))
+                   DeBruijn -> parse True
+                   NamingScheme -> NamingScheme.parse
            in currentParser model.program }
   SwitchTo l -> { model | inputLang = l }
 
@@ -109,27 +108,3 @@ radio group (n, msg) =
   label []
     [ input [ type_ "radio", name group, onClick msg ] [] , text n]
 
-deBruijnEncode : List Identifier -> Term -> Result String BTerm
-deBruijnEncode idStack term = case term of
-  Var ident ->
-    case elemIndex ident idStack of
-      Just i -> Ok (BVar i)
-      Nothing ->
-        case ident of
-          "zero" -> Ok (BPrim RZero)
-          "succ" -> Ok (BPrim RSucc)
-          "pred" -> Ok (BPrim RPred)
-          "fix" -> Ok (BPrim RFix)
-          _ -> Err ("Unbound identifier: " ++ ident)
-  Abs ident body ->
-    Result.map BAbs (deBruijnEncode (ident::idStack) body)
-  Bind ident value body ->
-    Result.map2 BBind (deBruijnEncode idStack value)
-                      (deBruijnEncode (ident::idStack) body)
-  App term1 term2 ->
-    Result.map2 BApp (deBruijnEncode idStack term1)
-                     (deBruijnEncode idStack term2)
-  IfZero term1 term2 term3 ->
-    Result.map3 BIfZero (deBruijnEncode idStack term1)
-                        (deBruijnEncode idStack term2)
-                        (deBruijnEncode idStack term3)

@@ -1,23 +1,57 @@
 module NamingScheme exposing (..)
 
-namingSchemeWords : ReservedWord -> String
-namingSchemeWords r = case r of
-  RLambda -> "Proxy"
-  RLet -> "Global"
-  RIn -> "Decorator"
-  RIf -> "Initializer"
-  RThen -> "Factory"
-  RElse -> "Bean"
-  RZero -> "Observer"
-  RSucc -> "Session"
-  RPred -> "Prototype"
-  RFix -> "Helper"
-  ROpen -> "Parser"
-  RClose -> "Adapter"
-  RAppOp -> "Service"
+import List.Extra exposing (dropWhile, takeWhile, find)
+import Print exposing (..)
+import DeBruijn exposing (BExpr, parse)
 
-namingSchemeVarRef =
-  many (string "Meta") >>= \metaStr->
-    string "Object" >>= \_->
-      succeed (BVar (List.length metaStr))
+parse : String -> Result String BExpr
+parse input =
+  String.toList input
+  |> toWords
+  |> List.map fromNamingSchemeWord
+  |> String.join " "
+  |> DeBruijn.parse
+
+toWords : List Char -> List String
+toWords chars = case chars of
+  [] -> []
+  (firstLetter::otherLetters) ->
+     String.fromList (firstLetter::(takeWhile Char.isLower otherLetters))
+     :: (toWords (dropWhile Char.isLower otherLetters))
+
+-- TODO handle error by propogating to parser Result
+toNamingSchemeWord : String -> String
+toNamingSchemeWord word = case find (\(l,n)->l==word) wordMap of
+  Just (_,n) -> n
+  Nothing -> "ERROR"
+
+-- TODO handle error by propogating to parser Result
+fromNamingSchemeWord : String -> String
+fromNamingSchemeWord word = case find (\(l,n)->n==word) wordMap of
+  Just (l,_) -> l
+  Nothing -> "ERROR"
+
+wordMap : List (String, String)
+wordMap = [
+  ("λ", "Proxy"),
+  ("let", "Global"),
+  ("in", "Decorator"),
+  ("if", "Initializer"),
+  ("then", "Factory"),
+  ("else", "Bean"),
+
+  ("zero", "Observer"),
+  ("succ", "Session"),
+  ("pred", "Prototype"),
+  ("fix", "Helper"),
+
+  ("(", "Parser"),
+  (")", "Adapter"),
+
+  ("+", "Add"),
+  ("-", "Sub"),
+  ("*", "Mul"),
+  ("/", "Div"),
+  ("$", "Service")
+  ]
 
