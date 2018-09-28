@@ -1,7 +1,7 @@
 module Eval exposing (..)
 
 import DeBruijn exposing (..)
-import Operators exposing (Operator(..))
+import Operator exposing (Operator(..))
 
 eval : BExpr -> Result String BExpr
 eval term =

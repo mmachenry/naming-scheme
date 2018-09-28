@@ -1,7 +1,6 @@
 module NamingScheme exposing (..)
 
 import List.Extra exposing (dropWhile, takeWhile, find)
-import Print exposing (..)
 import DeBruijn exposing (BExpr, parse)
 
 parse : String -> Result String BExpr

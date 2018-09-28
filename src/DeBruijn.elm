@@ -1,7 +1,6 @@
 module DeBruijn exposing (BExpr(..), Primitive(..), parse)
 
 import String
-import List.Extra exposing (elemIndex)
 import Debug exposing (toString)
 import Set
 import Parser exposing (..)
@@ -22,12 +21,12 @@ type Primitive = Fix | Zero | Succ | Pred
 
 parse : String -> Result String BExpr
 parse input =
-  case run expr input of
+  case run expression input of
     Ok a -> Ok a
     Err deadEnds -> Err (String.join " or " (List.map toString deadEnds))
 
-expr : Parser BExpr
-expr =
+expression : Parser BExpr
+expression =
   oneOf [
     abstraction,
     binding,
@@ -40,25 +39,25 @@ abstraction : Parser BExpr
 abstraction =
   succeed BAbs
     |. symbol "λ"
-    |= (lazy (\_->expr))
+    |= (lazy (\_->expression))
 
 binding : Parser BExpr
 binding =
   succeed BBind
     |. keyword "let"
-    |= (lazy (\_->expr))
+    |= (lazy (\_->expression))
     |. keyword "in"
-    |= (lazy (\_->expr))
+    |= (lazy (\_->expression))
 
 ifZero : Parser BExpr
 ifZero =
   succeed BIfZero
     |. keyword "if"
-    |= (lazy (\_->expr))
+    |= (lazy (\_->expression))
     |. keyword "then"
-    |= (lazy (\_->expr))
+    |= (lazy (\_->expression))
     |. keyword "else"
-    |= (lazy (\_->expr))
+    |= (lazy (\_->expression))
 
 primitive : Parser BExpr
 primitive =
@@ -93,7 +92,7 @@ appOp =
 
 term : Parser BExpr
 term = oneOf [
-  parens (lazy (\_->expr)),
+  parens (lazy (\_->expression)),
   map BVar int,
   primitive
   ]
@@ -112,38 +111,37 @@ reservedOp op = backtrackable (between spaces spaces (symbol op))
 
 pExpr : BExpr -> String
 pExpr expr = case expr of
-  Var i -> i
+  BVar i -> String.fromInt i
   BPrim prim -> case prim of
     Fix -> "fix"
     Zero -> "zero"
     Succ -> "succ"
     Pred -> "pred"
-  Abs i body -> "λ" ++ i ++ "." ++ pExpr body
-  App expr1 expr2 -> String.join " " [pAppLeft expr1, pAtom expr2]
-  Bind i value body ->
-    String.join " " ["let", i, "=", pExpr value, "in", pExpr body]
-  -- TODO use associativity to pretty print and drop some parens
-  IfZero expr1 expr2 expr3 ->
+  BAbs body -> "λ" ++ pExpr body
+  BApp expr1 expr2 -> String.join " " [pAppLeft expr1, pAtom expr2]
+  BBind value body ->
+    String.join " " ["let", pExpr value, "in", pExpr body]
+  BIfZero expr1 expr2 expr3 ->
     String.join " " [
       "if", pExpr expr1,
       "then", pExpr expr2,
       "else", pExpr expr3]
-  BinOp op lhs rhs ->
-    parens (pExpr lhs) ++ binOpToString op ++ parens (pExpr rhs)
+  -- TODO use associativity to pretty print and drop some parens
+  BBinOp op lhs rhs ->
+    pParens (pExpr lhs) ++ Operator.toString op ++ pParens (pExpr rhs)
 
 -- TODO review what is an atom for bin ops
-pAtom : Expr -> String
+pAtom : BExpr -> String
 pAtom expr = case expr of
-  App _ _ -> parens (pExpr expr)
+  BApp _ _ -> pParens (pExpr expr)
   _ -> pExpr expr
 
 -- TODO review what is an app left for bin ops
-pAppLeft : Expr -> String
+pAppLeft : BExpr -> String
 pAppLeft expr = case expr of
-  Abs _ _ -> parens (pExpr expr)
-  BAbs _ -> parens (pExpr expr)
+  BAbs _ -> pParens (pExpr expr)
   _ -> pExpr expr
 
-parens : String -> String
-parens l = "(" ++ l ++ ")"
+pParens : String -> String
+pParens l = "(" ++ l ++ ")"
 

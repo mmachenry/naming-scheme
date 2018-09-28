@@ -29,7 +29,7 @@ type Msg =
 type alias Model = {
   program : String,
   inputLang : Language,
-  term : Result String BTerm
+  term : Result String DeBruijn.BExpr
   }
 
 initModel = {
@@ -88,9 +88,9 @@ output model =
     case model.term of
       Ok t -> div [] [
         div [] [ text "De Bruijn Encoded Lambda Caculus." ],
-        div [] [ text (toDeBruijnString t) ],
+        div [] [ text (DeBruijn.pExpr t) ],
         div [] [ text "Compiled to NamingScheme." ],
-        div [] [ text (toNamingSchemeString t) ],
+        div [] [ text (NamingScheme.toString t) ],
         div [] [
           case Eval.eval t of
             Ok result ->

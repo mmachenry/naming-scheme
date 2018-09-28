@@ -1,4 +1,4 @@
-module LambdaCalculus exposing (Expr(..), parse)
+module LambdaCalculus exposing (Expr(..), Identifier, parse)
 
 import Debug exposing (toString)
 import Set
