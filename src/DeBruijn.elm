@@ -1,7 +1,7 @@
-module DeBruijn exposing (BExpr(..), Primitive(..), parse)
+module DeBruijn exposing (BExpr(..), Primitive(..), parse, toString)
 
 import String
-import Debug exposing (toString)
+import Debug
 import Set
 import Parser exposing (..)
 import Parser.Expression exposing (..)
@@ -23,7 +23,7 @@ parse : String -> Result String BExpr
 parse input =
   case run expression input of
     Ok a -> Ok a
-    Err deadEnds -> Err (String.join " or " (List.map toString deadEnds))
+    Err deadEnds -> Err (String.join " or " (List.map Debug.toString deadEnds))
 
 expression : Parser BExpr
 expression =
@@ -108,6 +108,9 @@ reservedOp op = backtrackable (between spaces spaces (symbol op))
 -----------
 -- Print
 -----------
+
+toString : BExpr -> String
+toString = pExpr
 
 pExpr : BExpr -> String
 pExpr expr = case expr of

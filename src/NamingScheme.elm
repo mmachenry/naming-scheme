@@ -54,3 +54,5 @@ wordMap = [
   ("$", "Service")
   ]
 
+toString : BExpr -> String
+toString expr = "NamingSchemeProgram"

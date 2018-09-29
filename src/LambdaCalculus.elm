@@ -1,6 +1,6 @@
 module LambdaCalculus exposing (Expr(..), Identifier, parse)
 
-import Debug exposing (toString)
+import Debug
 import Set
 import Parser exposing (..)
 import Parser.Expression exposing (..)
@@ -21,7 +21,7 @@ parse : String -> Result String Expr
 parse input =
   case run expr input of
     Ok a -> Ok a
-    Err deadEnds -> Err (String.join " or " (List.map toString deadEnds))
+    Err deadEnds -> Err (String.join " or " (List.map Debug.toString deadEnds))
 
 expr : Parser Expr
 expr =

@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
@@ -12,8 +13,8 @@ import DeBruijnEncode
 import NamingScheme
 import Eval
 
-main = Html.program {
-  init = (initModel, Cmd.none),
+main = Browser.element {
+  init = (\()->(initModel, Cmd.none)),
   view = view,
   update = update,
   subscriptions = subscriptions
@@ -48,8 +49,10 @@ updateModel msg model = case msg of
     term = let currentParser =
                  case model.inputLang of
                    LambdaCalculus ->
-                     (\p->parse False p |> Result.andThen (DeBruijn.encode []))
-                   DeBruijn -> LambdaCalculus.parse
+                     (\p->
+                          LambdaCalculus.parse p
+                       |> Result.andThen (DeBruijnEncode.deBruijnEncode []))
+                   DeBruijn -> DeBruijn.parse
                    NamingScheme -> NamingScheme.parse
            in currentParser model.program }
   SwitchTo l -> { model | inputLang = l }
@@ -61,8 +64,8 @@ subscriptions model = Sub.none
 
 view : Model -> Html Msg
 view model =
-  div [style []] [
-    div [style [("width", "80%"), ("margin","auto")]] [
+  div [] [
+    div [style "width" "80%", style "margin" "auto"] [
       div [] [
         fieldset [] (List.map (radio "langInput") [
           ("Lambda Calculus", SwitchTo LambdaCalculus),
@@ -78,7 +81,7 @@ editor : Model -> Html Msg
 editor model =
   div [] [
       div [] [ button [onClick RunProgram] [ text "Run" ] ],
-      textarea [style [("width", "100%")],
+      textarea [style "width" "100%",
                 rows 20,
                 onInput EditProgram]
                [ text model.program ] ]
@@ -88,7 +91,7 @@ output model =
     case model.term of
       Ok t -> div [] [
         div [] [ text "De Bruijn Encoded Lambda Caculus." ],
-        div [] [ text (DeBruijn.pExpr t) ],
+        div [] [ text (DeBruijn.toString t) ],
         div [] [ text "Compiled to NamingScheme." ],
         div [] [ text (NamingScheme.toString t) ],
         div [] [
@@ -96,9 +99,9 @@ output model =
             Ok result ->
               div [] [
                 div [] [ text "De Bruijn output" ],
-                div [] [ text (toDeBruijnString result) ],
+                div [] [ text (DeBruijn.toString result) ],
                 div [] [ text "NamingScheme output" ],
-                div [] [ text (toNamingSchemeString result) ]
+                div [] [ text (NamingScheme.toString result) ]
                 ]
             Err message -> div [] [ text message ]
           ]
