@@ -5,7 +5,7 @@ import Set
 import Parser exposing (..)
 import Parser.Expression exposing (..)
 import Parser.Extras exposing (parens, between)
-import Operator exposing (Operator(..))
+import Operator exposing (Operator(..), reservedOp, notFollowedBy)
 
 type alias Identifier = String
 
@@ -67,8 +67,7 @@ opExpr = buildExpressionParser operators term
 operators : OperatorTable Expr
 operators =
   [ [ Infix (succeed App |. appOp) AssocLeft ],
-    [ infixOperator (BinOp Mul) (reservedOp "*") AssocLeft,
-      infixOperator (BinOp Div) (reservedOp "/") AssocLeft ],
+    [ infixOperator (BinOp Mul) (reservedOp "*") AssocLeft ],
     [ infixOperator (BinOp Add) (reservedOp "+") AssocLeft,
       infixOperator (BinOp Sub) (reservedOp "-") AssocLeft ],
     [ infixOperator App (reservedOp "$") AssocRight ]
@@ -89,16 +88,13 @@ variableReference : Parser Expr
 variableReference = map Var identifier
 
 identifier : Parser String
-identifier = variable {
-  start = Char.isLower,
-  inner = Char.isLower,
-  reserved = Set.fromList ["let", "in", "if", "then", "else"]
-  }
+identifier =
+  succeed identity
+    |. spaces
+    |= variable {
+         start = Char.isLower,
+         inner = Char.isLower,
+         reserved = Set.fromList ["let", "in", "if", "then", "else"]
+         }
+    |. spaces
 
-notFollowedBy : Parser a -> Parser ()
-notFollowedBy p =
-  oneOf [map (\_->True) (backtrackable p), succeed False]
-  |> andThen (\b->if b then problem "found follow" else succeed ())
-
-reservedOp : String -> Parser ()
-reservedOp op = backtrackable (between spaces spaces (symbol op))

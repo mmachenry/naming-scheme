@@ -38,7 +38,12 @@ step term = case term of
            BApp (BPrim Succ) _ -> Ok alt
            _ -> Err "Not a number in conditional."
     else step cond |> Result.andThen (\res->Ok (BIfZero res conseq alt))
-  BBinOp op lhs rhs -> Ok term -- TODO this is punting
+  BBinOp op lhs rhs ->
+    if isValue lhs
+    then if isValue rhs
+         then applyOp op lhs rhs
+         else step rhs |> Result.andThen (\res->Ok (BBinOp op lhs res))
+    else step lhs |> Result.andThen (\res->Ok (BBinOp op res rhs))
 
 isValue : BExpr -> Bool
 isValue term = case term of
@@ -66,3 +71,30 @@ subst depth replacement term = case term of
     BBinOp op (subst depth replacement lhs)
               (subst depth replacement rhs)
 
+applyOp : Operator -> BExpr -> BExpr -> Result String BExpr
+applyOp op lhs rhs =
+  case exprToNum lhs of
+    Just n ->
+      case exprToNum rhs of
+        Just m -> Ok (numToExpr (opToFunc op n m))
+        Nothing -> Err "Not a number in bin op."
+    Nothing -> Err "Not a number in bin op."
+
+opToFunc : Operator -> (Int -> Int -> Int)
+opToFunc op = case op of
+  Add -> (+)
+  Sub -> (-)
+  Mul -> (*)
+
+exprToNum : BExpr -> Maybe Int
+exprToNum expr = exprToNumAux expr 0
+
+exprToNumAux expr n = case expr of
+  BPrim Zero -> Just n
+  BApp (BPrim Succ) subExpr -> exprToNumAux subExpr (n+1)
+  _ -> Nothing
+
+numToExpr : Int -> BExpr
+numToExpr num = case num of
+  0 -> BPrim Zero
+  n -> BApp (BPrim Succ) (numToExpr (n-1))

@@ -6,7 +6,7 @@ import Set
 import Parser exposing (..)
 import Parser.Expression exposing (..)
 import Parser.Extras exposing (parens, between)
-import Operator exposing (Operator(..))
+import Operator exposing (Operator(..), reservedOp, notFollowedBy)
 
 type BExpr =
     BVar Int
@@ -39,25 +39,25 @@ abstraction : Parser BExpr
 abstraction =
   succeed BAbs
     |. symbol "λ"
-    |= (lazy (\_->expression))
+    |= lazy (\_->expression)
 
 binding : Parser BExpr
 binding =
   succeed BBind
     |. keyword "let"
-    |= (lazy (\_->expression))
+    |= lazy (\_->expression)
     |. keyword "in"
-    |= (lazy (\_->expression))
+    |= lazy (\_->expression)
 
 ifZero : Parser BExpr
 ifZero =
   succeed BIfZero
     |. keyword "if"
-    |= (lazy (\_->expression))
+    |= lazy (\_->expression)
     |. keyword "then"
-    |= (lazy (\_->expression))
+    |= lazy (\_->expression)
     |. keyword "else"
-    |= (lazy (\_->expression))
+    |= lazy (\_->expression)
 
 primitive : Parser BExpr
 primitive =
@@ -78,8 +78,7 @@ opExpr = buildExpressionParser operators term
 operators : OperatorTable BExpr
 operators =
   [ [ Infix (succeed BApp |. appOp) AssocLeft ],
-    [ infixOperator (BBinOp Mul) (reservedOp "*") AssocLeft,
-      infixOperator (BBinOp Div) (reservedOp "/") AssocLeft ],
+    [ infixOperator (BBinOp Mul) (reservedOp "*") AssocLeft ],
     [ infixOperator (BBinOp Add) (reservedOp "+") AssocLeft,
       infixOperator (BBinOp Sub) (reservedOp "-") AssocLeft ],
     [ infixOperator BApp (reservedOp "$") AssocRight ]
@@ -96,14 +95,6 @@ term = oneOf [
   map BVar int,
   primitive
   ]
-
-notFollowedBy : Parser a -> Parser ()
-notFollowedBy p =
-  oneOf [map (\_->True) (backtrackable p), succeed False]
-  |> andThen (\b->if b then problem "found follow" else succeed ())
-
-reservedOp : String -> Parser ()
-reservedOp op = backtrackable (between spaces spaces (symbol op))
 
 -----------
 -- Print
