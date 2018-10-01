@@ -1,4 +1,12 @@
-module DeBruijn exposing (BExpr(..), Primitive(..), parse, toString)
+module DeBruijn exposing (
+  BExpr(..),
+  Primitive(..),
+  ReservedWord(..),
+  parse,
+  toString,
+  buildPrinter,
+  deBruijnWords
+  )
 
 import String
 import Debug
@@ -18,6 +26,24 @@ type BExpr =
   | BBinOp Operator BExpr BExpr
 
 type Primitive = Fix | Zero | Succ | Pred
+
+type ReservedWord =
+    RLambda
+  | RLet
+  | RIn
+  | REnd
+  | RIf
+  | RThen
+  | RElse
+  | RZero
+  | RSucc
+  | RPred
+  | RFix
+  | ROpen
+  | RClose 
+  | RAdd
+  | RSub
+  | RMul
 
 parse : String -> Result String BExpr
 parse input =
@@ -101,41 +127,75 @@ term = oneOf [
 -----------
 
 toString : BExpr -> String
-toString = pExpr
+toString = buildPrinter deBruijnWords String.fromInt " "
 
-pExpr : BExpr -> String
-pExpr expr = case expr of
-  BVar i -> String.fromInt i
-  BPrim prim -> case prim of
-    Fix -> "fix"
-    Zero -> "zero"
-    Succ -> "succ"
-    Pred -> "pred"
-  BAbs body -> "λ" ++ pExpr body
-  BApp expr1 expr2 -> String.join " " [pAppLeft expr1, pAtom expr2]
-  BBind value body ->
-    String.join " " ["let", pExpr value, "in", pExpr body]
-  BIfZero expr1 expr2 expr3 ->
-    String.join " " [
-      "if", pExpr expr1,
-      "then", pExpr expr2,
-      "else", pExpr expr3]
-  -- TODO use associativity to pretty print and drop some parens
-  BBinOp op lhs rhs ->
-    pParens (pExpr lhs) ++ Operator.toString op ++ pParens (pExpr rhs)
+deBruijnWords : ReservedWord -> String
+deBruijnWords r = case r of
+  RLambda -> "λ"
+  RLet -> "let"
+  RIn -> "in"
+  REnd -> "end"
+  RIf -> "if"
+  RThen -> "then"
+  RElse -> "else"
+  RZero -> "zero"
+  RSucc -> "succ"
+  RPred -> "pred"
+  RFix -> "fix"
+  ROpen -> "("
+  RClose -> ")"
+  RAdd -> "+"
+  RSub -> "-"
+  RMul -> "*"
 
--- TODO review what is an atom for bin ops
-pAtom : BExpr -> String
-pAtom expr = case expr of
-  BApp _ _ -> pParens (pExpr expr)
-  _ -> pExpr expr
+buildPrinter :
+     (ReservedWord -> String)
+  -> (Int -> String)
+  -> String
+  -> BExpr
+  -> String
+buildPrinter rword printVarRef separator =
+  let pExpr : BExpr -> String
+      pExpr expr = case expr of
+        BVar i -> String.fromInt i
+        BPrim prim -> case prim of
+          Fix -> rword RFix
+          Zero -> rword RZero
+          Succ -> rword RSucc
+          Pred -> rword RPred
+        BAbs body -> rword RLambda ++ pExpr body
+        BApp expr1 expr2 -> String.join separator [pAppLeft expr1, pAtom expr2]
+        BBind value body ->
+          String.join separator [rword RLet, pExpr value, rword RIn, pExpr body]
+        BIfZero expr1 expr2 expr3 ->
+          String.join separator [
+            rword RIf, pExpr expr1,
+            rword RThen, pExpr expr2,
+            rword RElse, pExpr expr3]
+        -- TODO use associativity to pretty print and drop some parens
+        BBinOp op lhs rhs ->
+          pParens (pExpr lhs) ++ pOperator op ++ pParens (pExpr rhs)
 
--- TODO review what is an app left for bin ops
-pAppLeft : BExpr -> String
-pAppLeft expr = case expr of
-  BAbs _ -> pParens (pExpr expr)
-  _ -> pExpr expr
+      -- TODO review what is an atom for bin ops
+      pAtom : BExpr -> String
+      pAtom expr = case expr of
+        BApp _ _ -> pParens (pExpr expr)
+        _ -> pExpr expr
 
-pParens : String -> String
-pParens l = "(" ++ l ++ ")"
+      -- TODO review what is an app left for bin ops
+      pAppLeft : BExpr -> String
+      pAppLeft expr = case expr of
+        BAbs _ -> pParens (pExpr expr)
+        _ -> pExpr expr
+
+      pParens : String -> String
+      pParens l = rword ROpen ++ l ++ rword RClose 
+
+      pOperator : Operator -> String
+      pOperator op = case op of 
+        Add -> rword RAdd
+        Sub -> rword RSub
+        Mul -> rword RMul
+
+  in pExpr
 

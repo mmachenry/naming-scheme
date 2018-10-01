@@ -5,12 +5,6 @@ import Parser.Extras exposing (..)
 
 type Operator = Add | Sub | Mul
 
-toString : Operator -> String
-toString op = case op of
-  Add -> "+"
-  Sub -> "-"
-  Mul -> "*"
-
 notFollowedBy : Parser a -> Parser ()
 notFollowedBy p =
   oneOf [map (\_->True) (backtrackable p), succeed False]

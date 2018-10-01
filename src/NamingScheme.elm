@@ -1,7 +1,7 @@
 module NamingScheme exposing (..)
 
 import List.Extra exposing (dropWhile, takeWhile, find)
-import DeBruijn exposing (BExpr, parse)
+import DeBruijn exposing (BExpr, parse, buildPrinter, ReservedWord(..), deBruijnWords)
 
 parse : String -> Result String BExpr
 parse input =
@@ -19,7 +19,7 @@ toWords chars = case chars of
      :: (toWords (dropWhile Char.isLower otherLetters))
 
 -- TODO handle error by propogating to parser Result
-toNamingSchemeWord : String -> String
+toNamingSchemeWord : ReservedWord -> String
 toNamingSchemeWord word = case find (\(l,n)->l==word) wordMap of
   Just (_,n) -> n
   Nothing -> "ERROR"
@@ -27,32 +27,32 @@ toNamingSchemeWord word = case find (\(l,n)->l==word) wordMap of
 -- TODO handle error by propogating to parser Result
 fromNamingSchemeWord : String -> String
 fromNamingSchemeWord word = case find (\(l,n)->n==word) wordMap of
-  Just (l,_) -> l
+  Just (l,_) -> deBruijnWords l
   Nothing -> "ERROR"
 
-wordMap : List (String, String)
+wordMap : List (ReservedWord, String)
 wordMap = [
-  ("λ", "Proxy"),
-  ("let", "Global"),
-  ("in", "Decorator"),
-  ("if", "Initializer"),
-  ("then", "Factory"),
-  ("else", "Bean"),
+  (RLambda, "Proxy"),
+  (RLet, "Global"),
+  (RIn, "Decorator"),
+  (RIf, "Initializer"),
+  (RThen, "Factory"),
+  (RElse, "Bean"),
 
-  ("zero", "Observer"),
-  ("succ", "Session"),
-  ("pred", "Prototype"),
-  ("fix", "Helper"),
+  (RZero, "Observer"),
+  (RSucc, "Session"),
+  (RPred, "Prototype"),
+  (RFix, "Helper"),
 
-  ("(", "Parser"),
-  (")", "Adapter"),
+  (ROpen, "Parser"),
+  (RClose, "Adapter"),
 
-  ("+", "Add"),
-  ("-", "Sub"),
-  ("*", "Mul"),
-  ("/", "Div"),
-  ("$", "Service")
+  (RAdd, "Add"),
+  (RSub, "Sub"),
+  (RMul, "Mul")
   ]
 
 toString : BExpr -> String
-toString expr = "NamingSchemeProgram"
+toString = buildPrinter toNamingSchemeWord printId ""
+
+printId n = String.repeat n "Meta" ++ "Object"
