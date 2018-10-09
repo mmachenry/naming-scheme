@@ -82,31 +82,46 @@ editor model =
   div [] [
       div [] [ button [onClick RunProgram] [ text "Run" ] ],
       textarea [style "width" "100%",
-                rows 20,
+                rows 8,
                 onInput EditProgram]
                [ text model.program ] ]
 
 output : Model -> Html Msg
 output model =
+  div [] [
+    h1 [] [ text"Direct lexical substitution" ],
+    div [] [ text <|
+      case model.inputLang of
+        LambdaCalculus -> "not relavent"
+        DeBruijn -> NamingScheme.fromDeBruijnString model.program
+        NamingScheme -> NamingScheme.toDeBruijnString model.program
+    ],
     case model.term of
-      Ok t -> div [] [
-        div [] [ text "De Bruijn Encoded Lambda Caculus." ],
-        div [] [ text (DeBruijn.toString t) ],
-        div [] [ text "Compiled to NamingScheme." ],
-        div [] [ text (NamingScheme.toString t) ],
-        div [] [
-          case Eval.eval t of
-            Ok result ->
-              div [] [
-                div [] [ text "De Bruijn output" ],
-                div [] [ text (DeBruijn.toString result) ],
-                div [] [ text "NamingScheme output" ],
-                div [] [ text (NamingScheme.toString result) ]
-                ]
-            Err message -> div [] [ text message ]
-          ]
-        ]
+      Ok t ->
+        case Eval.eval t of
+          Ok result -> displayResults t result
+          Err message -> div [] [ text message ]
       Err message -> div [] [ text message ]
+  ]
+
+displayResults : DeBruijn.BExpr -> DeBruijn.BExpr -> Html Msg
+displayResults expr result = div [] [
+  h1 [] [ text "DeBruijn" ],
+  h2 [] [ text "Expression" ],
+  div [] [ text (DeBruijn.toString expr) ],
+  h2 [] [ text "Result" ],
+  div [] [ text (DeBruijn.toString result) ],
+  h1 [] [ text "NamingScheme" ],
+  h2 [] [ text "Expression" ],
+  div [] [ text (NamingScheme.toString expr) ],
+  h2 [] [ text "Result" ],
+  div [] [ text (NamingScheme.toString result) ],
+  h1 [] [ text "Debug" ],
+  h2 [] [ text "AST" ],
+  div [] [ text (Debug.toString expr) ],
+  h2 [] [ text "Numeric value" ],
+  div [] [ text (Debug.toString (Eval.exprToNum result)) ]
+  ]
 
 radio : String -> (String, msg) -> Html msg
 radio group (n, msg) =

@@ -2,18 +2,21 @@ module DeBruijn exposing (
   BExpr(..),
   Primitive(..),
   ReservedWord(..),
+  Lexeme(..),
   parse,
+  lex,
   toString,
   buildPrinter,
   deBruijnWords
   )
 
 import String
+import List.Extra exposing (find)
 import Debug
 import Set
 import Parser exposing (..)
 import Parser.Expression exposing (..)
-import Parser.Extras exposing (parens, between)
+import Parser.Extras exposing (parens, between, many)
 import Operator exposing (Operator(..), reservedOp, notFollowedBy)
 
 type BExpr =
@@ -45,11 +48,28 @@ type ReservedWord =
   | RSub
   | RMul
 
+type Lexeme = LexVar Int | LexPrim Primitive | LexRes ReservedWord
+
 parse : String -> Result String BExpr
 parse input =
   case run expression input of
     Ok a -> Ok a
-    Err deadEnds -> Err (String.join " or " (List.map Debug.toString deadEnds))
+    Err deadEnds -> Err (deadEndsToString deadEnds)
+
+lex : String -> Result String (List Lexeme)
+lex input =
+  case run (lexer |. end) input of
+    Ok a -> Ok a
+    Err deadEnds -> Err (deadEndsToString deadEnds)
+
+lexer : Parser (List Lexeme)
+lexer = many (oneOf (
+     (map LexVar identifier)
+  :: (map LexPrim primitive)
+  :: (List.map mkKeywordLex wordMap)))
+
+mkKeywordLex : (ReservedWord, String) -> Parser Lexeme
+mkKeywordLex (rword, str) = succeed (LexRes rword) |. symbol str
 
 expression : Parser BExpr
 expression =
@@ -85,9 +105,12 @@ ifZero =
     |. keyword "else"
     |= lazy (\_->expression)
 
-primitive : Parser BExpr
+identifier : Parser Int
+identifier = between spaces spaces int
+
+primitive : Parser Primitive
 primitive =
-  map BPrim <| oneOf [
+  oneOf [
     succeed Fix |. keyword "fix",
     succeed Zero |. keyword "zero",
     succeed Succ |. keyword "succ",
@@ -118,8 +141,8 @@ appOp =
 term : Parser BExpr
 term = oneOf [
   parens (lazy (\_->expression)),
-  map BVar int,
-  primitive
+  map BVar identifier,
+  map BPrim primitive
   ]
 
 -----------
@@ -130,23 +153,29 @@ toString : BExpr -> String
 toString = buildPrinter deBruijnWords String.fromInt " "
 
 deBruijnWords : ReservedWord -> String
-deBruijnWords r = case r of
-  RLambda -> "λ"
-  RLet -> "let"
-  RIn -> "in"
-  REnd -> "end"
-  RIf -> "if"
-  RThen -> "then"
-  RElse -> "else"
-  RZero -> "zero"
-  RSucc -> "succ"
-  RPred -> "pred"
-  RFix -> "fix"
-  ROpen -> "("
-  RClose -> ")"
-  RAdd -> "+"
-  RSub -> "-"
-  RMul -> "*"
+deBruijnWords rword = case find (\(r,s)->r==rword) wordMap of
+  Just (_,s) -> s
+  Nothing -> "ERROR"
+
+wordMap : List (ReservedWord, String)
+wordMap = [
+  (RLambda, "λ"),
+  (RLet, "let"),
+  (RIn, "in"),
+  (REnd, "end"),
+  (RIf, "if"),
+  (RThen, "then"),
+  (RElse, "else"),
+  (RZero, "zero"),
+  (RSucc, "succ"),
+  (RPred, "pred"),
+  (RFix, "fix"),
+  (ROpen, "("),
+  (RClose, ")"),
+  (RAdd, "+"),
+  (RSub, "-"),
+  (RMul, "*")
+  ]
 
 buildPrinter :
      (ReservedWord -> String)
@@ -157,7 +186,7 @@ buildPrinter :
 buildPrinter rword printVarRef separator =
   let pExpr : BExpr -> String
       pExpr expr = case expr of
-        BVar i -> String.fromInt i
+        BVar i -> printVarRef i
         BPrim prim -> case prim of
           Fix -> rword RFix
           Zero -> rword RZero

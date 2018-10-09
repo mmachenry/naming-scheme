@@ -1,7 +1,7 @@
 module NamingScheme exposing (..)
 
 import List.Extra exposing (dropWhile, takeWhile, find)
-import DeBruijn exposing (BExpr, parse, buildPrinter, ReservedWord(..), deBruijnWords)
+import DeBruijn exposing (..)
 
 parse : String -> Result String BExpr
 parse input =
@@ -53,6 +53,26 @@ wordMap = [
   ]
 
 toString : BExpr -> String
-toString = buildPrinter toNamingSchemeWord printId ""
+toString = buildPrinter toNamingSchemeWord printVarRef ""
 
-printId n = String.repeat n "Meta" ++ "Object"
+printVarRef n = String.repeat n "Meta" ++ "Object"
+
+fromDeBruijnString : String -> String
+fromDeBruijnString dbString =
+  case lex dbString of
+    Ok l -> String.join "" (List.map lexemeToNamingSchemeString l)
+    Err str -> str
+
+lexemeToNamingSchemeString : Lexeme -> String
+lexemeToNamingSchemeString lexeme = case lexeme of
+  LexVar i -> printVarRef i
+  LexPrim p -> case p of
+                 Fix -> "fix"
+                 Zero -> "zero"
+                 Succ -> "succ"
+                 Pred -> "pred"
+  LexRes r -> toNamingSchemeWord r
+
+toDeBruijnString : String -> String
+toDeBruijnString nsString = "db"
+

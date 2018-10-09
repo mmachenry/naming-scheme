@@ -1,4 +1,4 @@
-module Eval exposing (..)
+module Eval exposing (eval, exprToNum)
 
 import DeBruijn exposing (..)
 import Operator exposing (Operator(..))
