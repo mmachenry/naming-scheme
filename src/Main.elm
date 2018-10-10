@@ -9,7 +9,6 @@ import String
 
 import LambdaCalculus
 import DeBruijn
-import DeBruijnEncode
 import NamingScheme
 import Eval
 
@@ -51,7 +50,7 @@ updateModel msg model = case msg of
                    LambdaCalculus ->
                      (\p->
                           LambdaCalculus.parse p
-                       |> Result.andThen (DeBruijnEncode.deBruijnEncode []))
+                       |> Result.andThen (LambdaCalculus.deBruijnEncode []))
                    DeBruijn -> DeBruijn.parse
                    NamingScheme -> NamingScheme.parse
            in currentParser model.program }

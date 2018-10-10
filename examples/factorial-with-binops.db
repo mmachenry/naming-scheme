@@ -1,0 +1,1 @@
+let fix λλif 0 then succ zero else 0 * 1 (pred 0) in 0 $ succ $ succ $ succ zero
