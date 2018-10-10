@@ -51,14 +51,11 @@ type ReservedWord =
 
 type Lexeme = LexVar Int | LexPrim Primitive | LexRes ReservedWord
 
-parse = run expression
-{-
 parse : String -> Result String BExpr
 parse input =
   case run expression input of
     Ok a -> Ok a
-    Err deadEnds -> Err (deadEndsToString deadEnds)
--}
+    Err deadEnds -> Err (Debug.toString deadEnds)
 
 lex : String -> Result String (List Lexeme)
 lex input =
@@ -95,8 +92,11 @@ binding : Parser BExpr
 binding =
   succeed BBind
     |. keyword "let"
+    |. spaces
     |= lazy (\_->expression)
+    |. spaces
     |. keyword "in"
+    |. spaces
     |= lazy (\_->expression)
 
 ifZero : Parser BExpr
