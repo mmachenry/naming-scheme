@@ -22,13 +22,13 @@ toWords chars = case chars of
 toNamingSchemeWord : ReservedWord -> String
 toNamingSchemeWord word = case find (\(l,n)->l==word) wordMap of
   Just (_,n) -> n
-  Nothing -> "ERROR"
+  Nothing -> "ERROR" -- FIXME raise into result
 
 -- TODO handle error by propogating to parser Result
 fromNamingSchemeWord : String -> String
 fromNamingSchemeWord word = case find (\(l,n)->n==word) wordMap of
   Just (l,_) -> deBruijnWords l
-  Nothing -> "ERROR"
+  Nothing -> "ERROR" -- FIXME raise into result
 
 wordMap : List (ReservedWord, String)
 wordMap = [
@@ -49,7 +49,8 @@ wordMap = [
 
   (RAdd, "Add"),
   (RSub, "Sub"),
-  (RMul, "Mul")
+  (RMul, "Mul"),
+  (RApp, "App")
   ]
 
 toString : BExpr -> String
@@ -67,10 +68,10 @@ lexemeToNamingSchemeString : Lexeme -> String
 lexemeToNamingSchemeString lexeme = case lexeme of
   LexVar i -> printVarRef i
   LexPrim p -> case p of
-                 Fix -> "fix"
-                 Zero -> "zero"
-                 Succ -> "succ"
-                 Pred -> "pred"
+                 Fix -> toNamingSchemeWord RFix
+                 Zero -> toNamingSchemeWord RZero
+                 Succ -> toNamingSchemeWord RSucc
+                 Pred -> toNamingSchemeWord RPred
   LexRes r -> toNamingSchemeWord r
 
 toDeBruijnString : String -> String

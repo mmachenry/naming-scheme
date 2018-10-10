@@ -85,6 +85,7 @@ opToFunc op = case op of
   Add -> (+)
   Sub -> (-)
   Mul -> (*)
+  App -> (+) -- FIXME branch 
 
 exprToNum : BExpr -> Maybe Int
 exprToNum expr = exprToNumAux expr 0

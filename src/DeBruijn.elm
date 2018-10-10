@@ -48,6 +48,7 @@ type ReservedWord =
   | RAdd
   | RSub
   | RMul
+  | RApp
 
 type Lexeme = LexVar Int | LexPrim Primitive | LexRes ReservedWord
 
@@ -61,7 +62,7 @@ lex : String -> Result String (List Lexeme)
 lex input =
   case run (lexer |. end) input of
     Ok a -> Ok a
-    Err deadEnds -> Err (deadEndsToString deadEnds)
+    Err deadEnds -> Err (Debug.toString deadEnds)
 
 lexer : Parser (List Lexeme)
 lexer = many (oneOf (
@@ -189,7 +190,8 @@ wordMap = [
   (RClose, ")"),
   (RAdd, "+"),
   (RSub, "-"),
-  (RMul, "*")
+  (RMul, "*"),
+  (RApp, "$")
   ]
 
 buildPrinter :
@@ -240,6 +242,7 @@ buildPrinter rword printVarRef separator =
         Add -> rword RAdd
         Sub -> rword RSub
         Mul -> rword RMul
+        App -> rword RApp
 
   in pExpr
 

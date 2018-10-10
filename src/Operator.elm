@@ -3,7 +3,7 @@ module Operator exposing (..)
 import Parser exposing (..)
 import Parser.Extras exposing (..)
 
-type Operator = Add | Sub | Mul
+type Operator = Add | Sub | Mul | App
 
 notFollowedBy : Parser a -> Parser ()
 notFollowedBy p =
