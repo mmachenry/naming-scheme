@@ -1,0 +1,7 @@
+let fix λλ
+  if 0
+  then succ zero
+  else if pred 0
+       then succ zero
+       else 1 (pred 0) + 1 (pred $ pred 0)
+in 0 $ succ $ succ $ succ zero

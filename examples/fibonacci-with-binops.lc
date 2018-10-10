@@ -1,0 +1,7 @@
+let fib = fix λf.λn.
+  if n
+  then succ zero
+  else if pred n
+       then succ zero
+       else f (pred n) + f (pred $ pred n)
+in fib $ succ $ succ $ succ zero
