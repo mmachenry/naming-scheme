@@ -11,6 +11,7 @@ module DeBruijn exposing (
   )
 
 import String
+import Char
 import List.Extra exposing (find)
 import Debug
 import Set
@@ -50,11 +51,14 @@ type ReservedWord =
 
 type Lexeme = LexVar Int | LexPrim Primitive | LexRes ReservedWord
 
+parse = run expression
+{-
 parse : String -> Result String BExpr
 parse input =
   case run expression input of
     Ok a -> Ok a
     Err deadEnds -> Err (deadEndsToString deadEnds)
+-}
 
 lex : String -> Result String (List Lexeme)
 lex input =
@@ -74,7 +78,6 @@ mkKeywordLex (rword, str) = succeed (LexRes rword) |. symbol str
 expression : Parser BExpr
 expression =
   oneOf [
-    abstraction,
     binding,
     ifZero,
     opExpr,
@@ -85,6 +88,7 @@ abstraction : Parser BExpr
 abstraction =
   succeed BAbs
     |. symbol "λ"
+    |. spaces
     |= lazy (\_->expression)
 
 binding : Parser BExpr
@@ -99,14 +103,24 @@ ifZero : Parser BExpr
 ifZero =
   succeed BIfZero
     |. keyword "if"
+    |. spaces
     |= lazy (\_->expression)
+    |. spaces
     |. keyword "then"
+    |. spaces
     |= lazy (\_->expression)
+    |. spaces
     |. keyword "else"
+    |. spaces
     |= lazy (\_->expression)
 
 identifier : Parser Int
-identifier = between spaces spaces int
+identifier =
+  getChompedString (chompWhile Char.isDigit)
+  |> andThen (\numStr->
+       case String.toInt numStr of
+         Just i -> succeed i
+         Nothing -> problem "Not an integer")
 
 primitive : Parser Primitive
 primitive =
@@ -140,6 +154,7 @@ appOp =
 
 term : Parser BExpr
 term = oneOf [
+  abstraction,
   parens (lazy (\_->expression)),
   map BVar identifier,
   map BPrim primitive

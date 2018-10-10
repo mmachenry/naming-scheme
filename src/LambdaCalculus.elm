@@ -26,7 +26,6 @@ parse input =
 expr : Parser Expr
 expr =
   oneOf [
-    abstraction,
     binding,
     ifZero,
     opExpr,
@@ -48,6 +47,7 @@ binding =
     |= identifier
     |. symbol "="
     |= (lazy (\_->expr))
+    |. spaces -- TODO why is this needed here and not elsewhere?
     |. keyword "in"
     |= (lazy (\_->expr))
 
@@ -80,6 +80,7 @@ appOp =
 
 term : Parser Expr
 term = oneOf [
+    abstraction,
     parens (lazy (\_->expr)),
     variableReference
   ]
